@@ -1,0 +1,40 @@
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+
+\documentclass[twoside]{article}
+%\usepackage{soul}
+\usepackage{./lecnotes_macros}
+
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURERS**}{**SCRIBE**}
+\lecture{2}{19 January 2025}{Maria Francis and M. V. Panduranga Rao}{Gautam Singh}
+%\footnotetext{These notes are partially based on those of Nigel Mansell.}
+
+%All figures are to be placed in a separate folder named ``images''
+
+% **** YOUR NOTES GO HERE:
+
+\section{Finding the Round Subkey of the F Function}
+
+Throughout these notes, we make repeated use of the following lemma.
+
+\begin{lemma}
+    \label{lem:Fk}
+    Suppose that \(F_k\brak{x} = X\), where \(x\) denotes the XOR of the inputs,
+    \(X\) denotes the XOR of the outputs and \(k\) denotes the subkey used in
+    \(F\). Then, given \(x\) and \(X\), we can extract \(k\) efficiently.
+\end{lemma}
+\begin{proof}
+    Since we know \(x\), we know \(S_E\) and thus we know \(S_I\). Now, we also
+    know  
+\end{proof}
+
+\section{Cryptanalysis of DES Reduced to 4 Rounds}
+
+\end{document}
