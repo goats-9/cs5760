@@ -118,4 +118,28 @@ each of \(\Omega^3\) and \(\Omega^4\).
 
 \section{DES Reduced to 6 Rounds}
 
+For the cryptanalysis of DES reduced to 6 rounds, we make use of two
+characteristics, both with probability \(\frac{1}{16}\) as shown in
+\autoref{fig:des-6-char}.
+
+\begin{figure}[!ht]
+    \centering
+    \begin{subfigure}{0.45\linewidth}
+        \includegraphics[width=\linewidth]{images/des_6round_char1.png}
+        \label{fig:des-6-char1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\linewidth}
+        \includegraphics[width=\linewidth]{images/des_6round_char2.png}
+        \label{fig:des-6-char2}
+    \end{subfigure}
+    \caption{Characteristics used for cryptanalysis of DES reduced to 6 rounds.}
+    \label{fig:des-6-char}
+\end{figure}
+
+For the characteristic \(\Omega_P^1\), the S boxes S2, S5, \dots, S8 have zero
+input XORs and for \(\Omega_P^2\), the S boxes S1, S2, S4, S5 and S6 have zero
+input XORs in the fourth round. Note that \(d^\prime = b^\prime \oplus C^\prime
+= C^\prime\). We write
+
 \end{document}
