@@ -202,4 +202,37 @@ After finding \(K6\) entirely, one can now brute force the other 8 missing key
 bits of the master key, leading to a faster cryptanalysis of DES reduced to 
 six rounds.
 
+\subsection{Amount of Data Required}
+The signal to noise ratio for finding the 30 subkey bits using \(\Omega_P^1\) 
+and \(\Omega_P^2\) is
+
+\begin{equation}
+    S/N = \frac{2^{30} \cdot \frac{1}{16}}{4^5} = 2^{14}.
+    \label{eq:des-6-sn1}
+\end{equation}
+
+The \(S/N\) is high and about 7-8 pairs are needed for each characteristic. 
+Since each characteristic has probability \(\frac{1}{16}\), we require about 
+120 pairs of plaintexts.
+
+For finding the remaining 6 key bits of \(K6\), the signal to noise ratio is
+
+\begin{equation}
+    S/N = \frac{2^6 \dot 1}{4} = 16.
+    \label{eq:des-6-sn2}
+\end{equation}
+
+Though it is much lesser, we can still find 7-8 right pairs and find a clique.
+In total, we need 240 plaintexts for the cryptanalysis.
+
+\section{Cryptanalysis of DES Reduced to 8 Rounds}
+DES reduced to 8 rounds uses a 5-round characteristic with probability 
+approximately \(\frac{1}{10486}\) as shown in \autoref{fig:des-8-char}.
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/des_8round_char.png}
+    \caption{5 round characteristic used to cryptanalyze DES reduced to 8 rounds.}
+    \label{fig:des-8-char}
+\end{figure}
 \end{document}
