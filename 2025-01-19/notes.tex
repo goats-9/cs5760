@@ -47,11 +47,11 @@ we have \(d^\prime = r^\prime\), so \(d^\prime\) is completely known. Observe
 that \(S^\prime_{Eb} = 0\) for S2, \dots, S8. Thus, \(S^\prime_{Ob} = 0\) always
 for 28 bits. Hence, \(S^\prime_{Od}\) is known for S2, \dots, S8. We find the
 6-bit subkey blocks corresponding \(S_{Kd}\) using bruteforce to verify
-\eqref{eq:des-4rd-k4}. 
+\eqref{eq:des-ki}. 
 
 \begin{equation}
-    S\brak{S_{Ed} \oplus S_{Kd}} \oplus S\brak{S^*_{Ed} \oplus S_{Kd}} = S^\prime_{Od}.
-    \label{eq:des-4rd-k4}
+    S\brak{S_{E} \oplus S_{K}} \oplus S\brak{S^*_{E} \oplus S_{K}} = S^\prime_{O}.
+    \label{eq:des-ki}
 \end{equation}
 
 Since \(\Omega_P^1\) has probability 1 and \(\brak{d^\prime, D^\prime}\) is a
@@ -116,7 +116,9 @@ For the cryptanalysis, a total of 16 encryptions are needed to find the keys
 with high probability: 8 pairs each of \(\Omega^1\) and \(\Omega^2\) and 4 pairs
 each of \(\Omega^3\) and \(\Omega^4\).
 
-\section{DES Reduced to 6 Rounds}
+\section{Cryptanalysis of DES Reduced to 6 Rounds}
+
+\subsection{Characteristics for Recovering K6}
 
 For the cryptanalysis of DES reduced to 6 rounds, we make use of two
 characteristics, both with probability \(\frac{1}{16}\) as shown in
@@ -139,7 +141,65 @@ characteristics, both with probability \(\frac{1}{16}\) as shown in
 
 For the characteristic \(\Omega_P^1\), the S boxes S2, S5, \dots, S8 have zero
 input XORs and for \(\Omega_P^2\), the S boxes S1, S2, S4, S5 and S6 have zero
-input XORs in the fourth round. Note that \(d^\prime = b^\prime \oplus C^\prime
-= C^\prime\). We write
+input XORs in the fourth round. We write
+
+\begin{align}
+    e^\prime &= F^\prime \oplus l^\prime = c^\prime \oplus D^\prime \\
+    \implies F^\prime &= c^\prime \oplus D^\prime \oplus l^\prime
+    \label{eq:des-6-epr}
+\end{align}
+
+\subsection{Finding K6 Efficiently}
+
+From both characteristics, we can find 42 bits of \(K6\). However, using a 
+direct \(2^{30}\) counting approach for each characteristic is memory
+intensive. The authors proposed a graph-based algorithm to work around this.
+Consider a graph \(G = \brak{V, E}\) where
+
+\begin{enumerate}
+    \item Each \(v \in V\) represents a plaintext.
+    \item The edge \(\brak{u, v}\) is labelled using a 64-bit mask for each S 
+    box, with each bit representing one of the possible 64 6-bit keys that 
+    enter that particular S box. Thus, each edge has five 64-bit masks 
+    associated with it.
+    \item We define a \emph{clique} in \(G\) to be a set of vertices where the 
+    bitwise ``and'' of all edge labels for each of the five masks is nonzero.
+\end{enumerate}
+
+Thus, the task is to find the largest such clique, which corresponds to the 
+most likely values of \(S_{Kf}\) for the corresponding S boxes with zero XOR 
+inputs. This can be done with a recursive clique finding algorithm. This works
+for smaller graphs with few edges as the complexity of this algorithm is
+exponential. Applying this algorithm for both characteristics, if the 
+\(S_{Kf}\) values match for the common S boxes S2, S5 and S6, we have found
+42 bits of \(K6\) with high probability.
+
+\subsection{Speeding up the Cryptanalysis}
+
+Though brute forcing the other 14 bits of the master key is already fast 
+enough, we can do better by finding the other 6 key bits entering S3 in the 
+sixth round. First, we filter out pairs satisfying \eqref{eq:des-6-epr}, 
+leaving us with \(\frac{1}{16}\) possibly right pairs. Then, for each possible
+value of \(S3_{Kf}\), we decrypt the sixth round to get \(e\) and \(e^*\),
+using which we verify the equality \(E^\prime = d^\prime \oplus f^\prime\).
+Specifically, we verify that \(Si^\prime_{Oe}\) for \(i \in \cbrak{2,3,8}\)
+match the computed value of \(E^\prime\). Only one of the 64 possibilities will
+survive with high probability since the chances of another possibility also 
+satisfying the given inequality is \(2^{-20}\). This works because of the 
+dependence of \(S_{Ke}\) on the key bits in \(S_{kf}\) as shown in 
+\autoref{fig:des-k5}.
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/des_k5.png}
+    \caption{Dependence of \(K5\) on bits of \(K6\). The `3' indicates 
+    dependence on \(S3_{Kf}\), the `.' indicates bits unused in \(K6\) and the 
+    `+' indicates dependence on known key bits of \(K6\).}
+    \label{fig:des-k5}
+\end{figure}
+
+After finding \(K6\) entirely, one can now brute force the other 8 missing key 
+bits of the master key, leading to a faster cryptanalysis of DES reduced to 
+six rounds.
 
 \end{document}
