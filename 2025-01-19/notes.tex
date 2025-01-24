@@ -218,21 +218,10 @@ Since each characteristic has probability \(\frac{1}{16}\), we require about
 For finding the remaining 6 key bits of \(K6\), the signal to noise ratio is
 
 \begin{equation}
-    S/N = \frac{2^6 \dot 1}{4} = 16.
+    S/N = \frac{2^6 \cdot 1}{4} = 16.
     \label{eq:des-6-sn2}
 \end{equation}
 
 Though it is much lesser, we can still find 7-8 right pairs and find a clique.
 In total, we need 240 plaintexts for the cryptanalysis.
-
-\section{Cryptanalysis of DES Reduced to 8 Rounds}
-DES reduced to 8 rounds uses a 5-round characteristic with probability 
-approximately \(\frac{1}{10486}\) as shown in \autoref{fig:des-8-char}.
-
-\begin{figure}[!ht]
-    \centering
-    \includegraphics[width=0.5\textwidth]{images/des_8round_char.png}
-    \caption{5 round characteristic used to cryptanalyze DES reduced to 8 rounds.}
-    \label{fig:des-8-char}
-\end{figure}
 \end{document}
