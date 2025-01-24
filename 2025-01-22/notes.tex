@@ -76,4 +76,28 @@ of the characteristic \(\Omega_P\) to \(\frac{1}{5243}\) and consequently
 doubles the \(S/N\) for counting on 24 bits and 18 bits of \(K8\) to \(15.6\)
 and \(1.2\) respectively.
 
+Counting on 24 subkey bits, we only require about five right pairs due to the
+high \(S/N\). This gives us approximately 25000 plaintext pairs. For 18 subkey
+bits, we need about 150000 pairs. The average count per key is \(\frac{150000
+\times 4^3 \times 0.8^2}{2^18} = 24\) and the right key is counted an additional
+\(\frac{150000}{5243} = 29\) times, giving a total count of \(24 + 29 = 53\) for
+the right key.
+
+However, this finds us 18 subkey bits, say entering S6, S7 and S8. To find the
+other 12 subkey bits entering S2 and S5 in the eighth round, we filter the pairs
+that correspond to the subkey values in S6, S7 and S8. The expected number of
+pairs is then 53. Counting on the remaining 12 bits using these right pairs
+leads to a higher \(S/N\) which can filter more pairs.
+
+Now, using the known 30 subkey bits of \(K8\), we can find the dependence of the
+bits of \(g\) and \(S_{Kg}\) on \(K8\). This dependence is shown in
+\autoref{fig:des-8rd-dep}.
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/des_8round_dep.png}
+    \caption{Dependence of bits at the seventh round on those of the eighth round. `+' indicates dependence on known key bits, `.' indicates dependence on other key bits and a number indicates dependence on unknown key bits that enter the corresponding S box in the eighth round.}
+    \label{fig:des-8rd-dep}
+\end{figure}
+
 \end{document}
