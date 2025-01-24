@@ -157,11 +157,12 @@ intensive. The authors proposed a graph-based algorithm to work around this.
 Consider a graph \(G = \brak{V, E}\) where
 
 \begin{enumerate}
-    \item Each \(v \in V\) represents a plaintext.
-    \item The edge \(\brak{u, v}\) is labelled using a 64-bit mask for each S 
-    box, with each bit representing one of the possible 64 6-bit keys that 
-    enter that particular S box. Thus, each edge has five 64-bit masks 
-    associated with it.
+    \item Each \(v \in V\) represents a plaintext pair.
+    \item The edge \(\brak{u, v}\) is labelled using a 64-bit mask for each S
+    box, with each bit representing one of the possible 64 6-bit keys that enter
+    that particular S box. A set bit implies that the corresponding key is
+    suggested by the pair. Thus, each edge has five 64-bit masks associated with
+    it.
     \item We define a \emph{clique} in \(G\) to be a set of vertices where the 
     bitwise ``and'' of all edge labels for each of the five masks is nonzero.
 \end{enumerate}
