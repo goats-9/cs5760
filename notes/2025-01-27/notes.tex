@@ -1,0 +1,51 @@
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+
+\documentclass[twoside]{article}
+%\usepackage{soul}
+\usepackage{./lecnotes_macros}
+
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURERS**}{**SCRIBE**}
+\lecture{4}{27 January 2025}{Maria Francis and M. V. Panduranga Rao}{Gautam Singh}
+%\footnotetext{These notes are partially based on those of Nigel Mansell.}
+
+%All figures are to be placed in a separate folder named ``images''
+
+% **** YOUR NOTES GO HERE:
+
+\section{Attack on DES}
+
+The iterative characteristic by itself is not enough to break 16-round DES due
+to its low probability. However, it was enough for DES reduced to 15 rounds. To
+retain this probability, we use a new round 1. This new round 1 will generate
+plaintexts with XOR \(\brak{\psi,0}\) which can then be fed into the
+characteristic.
+
+Suppose \(P\) is a 64-bit plaintext and let \(v_i\) be a 32-bit constant with
+the first 12 bits equal to the possible outputs of S1, S2, S3 after the first
+round and 0 elsewhere for \(0 \le i < 2^{12}\). Define for \(0 \le i < 2^{12}\)
+
+\begin{align}
+    P_i = P \oplus \brak{v_i, 0} \quad & \bar{P_i} = P_i \oplus \brak{0, \psi} \label{eq:pi-def} \\
+    T_i = \textrm{DES}\brak{P_i, K} \quad & \bar{T_i} = \textrm{DES}\brak{\bar{P_i}, K}. \label{eq:ti-def}
+\end{align}
+
+Then, \(P_i \oplus P_j = \brak{v_k, \psi}\). Out of the \(2^{24}\) possibilities
+of \(\brak{i, j}\), each \(v_k\) occurs exactly \(2^{12}\) times. Now, an XOR of
+\(\psi\) is fed into the first round, but we do not know which \(v_k\) is to be
+chosen initially to cancel the output of the \(F\) function and give us the
+desired \(\brak{\psi, 0}\) input to the second round. Trying all \(2^{24}\)
+possibilities is slow. To find the right \(v_k\), we exploit the cross-product
+structure of \(P_i\) and \(\bar{P_j}\). Notice that a right pair will have zero
+outputs at S4, \dots, S8 at the last round. Thus, we can feed in the plaintexts
+\(P_i\) and \(\bar{P_j}\) to get outputs \(T_i\) and \(\bar{T_j}\). These
+\(2^{13}\) outputs can then be hashed by these 20 positions.
+
+\end{document}
