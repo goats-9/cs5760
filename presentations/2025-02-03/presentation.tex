@@ -37,9 +37,7 @@
 		\tableofcontents
 	\end{frame}
 	
-	\section{Introduction to Differential Cryptanalysis}
-
-	\subsection{Differential Cryptanalysis}
+	\section{Differential Cryptanalysis}
 	
 	\begin{frame}
 		\frametitle{Differential Cryptanalysis}
@@ -73,7 +71,7 @@
 		\end{columns}
 	\end{frame}
 
-	\subsection{Probability Analysis of S Boxes}
+	\section{Probability Analysis of S Boxes}
 	
 	\begin{frame}
 		\frametitle{Probability Analysis of S Boxes}
@@ -92,10 +90,46 @@
 			\item<3-> This joint PMF can reduce the number of possible
 			(sub)keys. Used to drive choice for the plaintext XOR.
 			\begin{itemize}
-				\item Approximately 80 \% of entries are non-zero/possible for
-				each S box (some have lesser percentages).
+				\item \(\approx 80\%\) entries are non-zero/possible for each S
+				box (some have lesser percentages).
+				\item Given \(Si_I^\prime\) and \(Si_O^\prime\), we can narrow
+				down \(Si_K\) to a few possibilities.
 			\end{itemize}
+			\item<4-> \(i\)-th S box contributes probability \(p_i\) for
+			\(Si_I^\prime \rightarrow Si_O^\prime\). 
+			\begin{itemize}
+				\item For \(X \rightarrow Y\) over a round, \(P = \prod_i p_i\).
+				\item Over \(n\) rounds, \(P = \prod_{i=1}^n P_i\).
+			\end{itemize}
+			\only<5->{\bfseries Desirable for cryptanalysis: high \(P\) with
+			large \(n\).}
 		\end{enumerate}
+	\end{frame}
+
+	\section{Characteristic}
+
+	\begin{frame}
+		\frametitle{Characteristic}
+		Formalizes notion of high-probability plaintext XORs.
+		\begin{definition}[Characteristic]
+			An \emph{n-round chracteristic} is a tuple \(\Omega =
+			\brak{\Omega_P, \Omega_\Lambda, \Omega_T}\) where \(\Omega_P =
+			\brak{L^\prime, R^\prime}\) and \(\Omega_T = \brak{l^\prime,
+			r^\prime}\) are \(m\) bit numbers, \(\Omega_\Lambda =
+			\brak{\Lambda_1, \ldots, \Lambda_n}\), \(\Lambda_i =
+			\brak{\lambda_I^i, \lambda_O^i}\) and \(\lambda_I^i,
+			\lambda_O^i, L^\prime, R^\prime, l^\prime, r^\prime\) are
+			\(\frac{m}{2}\) bit numbers and \(m\) is the block size of the
+			cryptosystem satisfying
+			\begin{align}
+				\lambda_I^1 &= R^\prime \\
+				\lambda_I^2 &= L^\prime \oplus \lambda_O^1 \\
+				\lambda_I^n &= r^\prime \\
+				\lambda_I^{n-1} &= l^\prime \oplus \lambda_O^n \\
+				\forall\ 1 < i < n,\ \lambda_O^i &= \lambda_I^{i-1} \oplus \lambda_I^{i+1}
+				\label{eq:char-def}
+			\end{align}
+		\end{definition}
 	\end{frame}
 
 \end{document}
