@@ -1,4 +1,5 @@
-\documentclass[xcolor=dvipsnames]{beamer}
+% Set the document class and theme
+\documentclass{beamer}
 
 \usetheme{Madrid}
 \useoutertheme{miniframes} % Alternatively: miniframes, infolines, split
@@ -18,6 +19,8 @@
 \setbeamercolor{subsection in head/foot}{bg=IITHyellow,fg=white}
 
 \setbeamertemplate{caption}[numbered]
+
+\usepackage{./presentation_macros}
 
 \title[Cryptanalysis of DES]{CS5760: Cryptanalysis of DES and DES-like Iterated Cryptosystems}
 \date{February 3, 2025}
@@ -41,22 +44,25 @@
 	\begin{frame}
 		\frametitle{Differential Cryptanalysis}
 		\begin{columns}
-			\begin{column}{0.49\textwidth}
+			\begin{column}{0.65\textwidth}
 				\begin{enumerate}
 					\item<1-> Chosen plaintext attack.
 					\item<1-> Exploit XOR between plaintext pairs to find key bits.
-					\item<2-> Per DES round, XOR is invariant under:
+					\item<2-> Per DES round, XOR of respective inputs is:
 					\begin{itemize}
-						\item Expansion \(E\) to get \(S_E\).
-						\item Key mixing with subkey \(S_K\) to get \(S_I = S_E
-						\oplus S_K\).
-						\item Permutation on \(S_O\) after S boxes.
+						\item \emph{Linear} in expansion \(E\) to get \(S_E\).
+						\item \emph{Invariant} in key mixing with subkey \(S_K\)
+						to get \(S_I = S_E \oplus S_K\).
+						\item \emph{Linear} in permutation \(P\) on \(S_O\)
+						after S boxes.
+						\item \emph{Invariant} in XOR operation connecting
+						rounds.
 					\end{itemize}
 					\item<3-> S boxes are \emph{nonlinear}. Probability analysis
-					performed on XOR of S box inputs and outputs.
+					performed between input and output XOR.
 				\end{enumerate}
 			\end{column}
-			\begin{column}{0.49\textwidth}
+			\begin{column}{0.35\textwidth}
 				\begin{figure}[!ht]
 					\centering
 					\includegraphics<2->[width=\columnwidth]{images/des_f.png}
@@ -65,6 +71,31 @@
 				\end{figure}
 			\end{column}
 		\end{columns}
+	\end{frame}
+
+	\subsection{Probability Analysis of S Boxes}
+	
+	\begin{frame}
+		\frametitle{Probability Analysis of S Boxes}
+		\begin{enumerate}
+			\item Suppose \(Si_I^\prime = Si_I \oplus Si_I^*\) is the input XOR
+			to the \(i\)-th S box, and \(Si_O^\prime\) is the output XOR (\(1
+			\le i \le 8\)).
+			\item<2-> We create a \emph{pairs XOR distribution table} for each S
+			box.
+			\begin{itemize}
+				\item Each entry \(\brak{Si_I^\prime, Si_O^\prime}\) equals the
+				number of 6-bit key blocks \(Si_K\) for which \(Si_I^\prime
+				\rightarrow Si_O^\prime\).
+				\item 64-by-16 joint probability mass function.
+			\end{itemize}
+			\item<3-> This joint PMF can reduce the number of possible
+			(sub)keys. Used to drive choice for the plaintext XOR.
+			\begin{itemize}
+				\item Approximately 80 \% of entries are non-zero/possible for
+				each S box (some have lesser percentages).
+			\end{itemize}
+		\end{enumerate}
 	\end{frame}
 
 \end{document}
