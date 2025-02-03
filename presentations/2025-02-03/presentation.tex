@@ -170,10 +170,6 @@
 			any fixed plaintext pair satisfying \(P^\prime = \Omega_P\) is a
 			right pair when random independent keys are used.
 		\end{theorem}
-		\pause
-		\begin{proof}[Proof Idea]
-			Keys \emph{randomize} the inputs to the S boxes in each round.
-		\end{proof}
 	\end{frame}
 
 	\begin{frame}
@@ -379,9 +375,124 @@
 	\subsection{DES Reduced to Six Rounds}
 
 	\begin{frame}
-		\frametitle{<title>}
-	
-		
-	
+		\frametitle{DES Reduced to Six Rounds}
+		\begin{enumerate}
+			\item Two three-round characteristics used, each with probability
+			\(\frac{1}{16}\).
+			\item<2-> We have,
+			\begin{equation}
+				e^\prime = c^\prime \oplus D^\prime = F^\prime \oplus l^\prime \implies F^\prime = c^\prime \oplus D^\prime \oplus l^\prime
+			\end{equation}
+		\end{enumerate}
+		\begin{figure}[!ht]
+		    \centering
+		    \begin{subfigure}{0.4\linewidth}
+		        \includegraphics[width=\columnwidth]{images/des_6round_char1.png}
+		    \end{subfigure}
+			~
+		    \begin{subfigure}{0.4\linewidth}
+		        \includegraphics[width=\columnwidth]{images/des_6round_char2.png}
+		    \end{subfigure}
+		    \caption{Characteristics used for cryptanalysis of DES reduced to 6 rounds.}
+		    \label{fig:des-6-char}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{DES Reduced to Six Rounds}
+		\begin{enumerate}
+			\item<1-> In the fourth round,
+			\begin{itemize}
+				\item with \(\Omega^1\), S2, S5, \dots, S8 have zero input XORs.
+				\item with \(\Omega^2\), S1, S2, S4, S5 and S6 have zero input
+				XORs.
+			\end{itemize}
+			\item<2-> Combining both characteristics, 42 key bits of \(K6\) can
+			be found.
+			\item<3-> Counting on more bits gives high \(S/N\) at the cost of
+			exponentially more memory.
+			\item<4-> Due to higher \(S/N\), fewer plaintext pairs are analyzed.
+			\emph{This is exploited to get a faster counting algorithm}.
+		\end{enumerate}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{The Clique Method}
+		\begin{enumerate}
+			\item<1-> Used to reduce memory when few plaintexts are used to
+			count on more subkey bits.
+			\item<2-> Create a graph where
+			\begin{itemize}
+				\item Each plaintext pair is a vertex.
+				\item There is an edge between two vertices if corresponding
+				pairs suggest the same key value for an S box.
+			\end{itemize}
+			\item<3-> The edges are labelled with five 64-bit masks (one mask
+			per S box, one bit per suggested key value in the mask).
+			\begin{itemize}
+				\item A pair suggests a key value if it passes the check in
+				\eqref{eq:des-4rd-check}.
+			\end{itemize}
+			\item<4-> Goal is to find the largest clique such that the bitwise
+			AND of all masks in the subgraph induced by that clique is nonzero.
+			\item<5-> Apply this method for both \(\Omega^1\) and \(\Omega^2\),
+			ensuring that the suggested keys at S2, S5 and S6 match. Otherwise,
+			use more data.
+		\end{enumerate}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Completing the Cryptanalysis}
+		\begin{columns}
+			\begin{column}{0.6\linewidth}
+				\begin{enumerate}
+					\item 42 key bits have been found, thus exhaustive search
+					can be performed on the remaining 14 bits.
+					\item To speed up the search, we can find the remaining 6
+					key bits of \(K6\) using \cref{fig:des-k5}. Count using
+					checks on S2, S3 and S8 of the fifth round. 
+					\begin{itemize}
+						\item Remaining 8 bits can be exhaustively searched. 
+						\item Wrong pairs should be discarded by checking if
+						they satisfy the characteristic and expected value of
+						\(F^\prime\).
+						\item This will leave us with \(\frac{1}{16}\) of the
+						pairs, which boosts \(S/N\) greatly.
+					\end{itemize}
+				\end{enumerate}
+			\end{column}
+			\begin{column}{0.4\linewidth}
+				\begin{figure}[!ht]
+					\centering
+					\includegraphics[width=\columnwidth]{images/des_k5.png}
+					\caption{Dependence of \(K5\) on bits of \(K6\). `3'
+					indicates dependence on \(S3_{Kf}\), `.' indicates bits
+					unused in K6 and `+' indicates dependence on known key bits
+					of K6.}
+					\label{fig:des-k5}
+				\end{figure}
+			\end{column}
+		\end{columns}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Data Requirements}
+		\begin{enumerate}
+			\item The first phase has
+			\begin{equation}
+				S/N = \frac{2^{30} \cdot \frac{1}{16}}{4^5} = 2^{16}.
+			\end{equation}
+			Only 7-8 pairs are needed for each characteristic. Since each
+			characteristic has probability \(\frac{1}{16}\), we require about
+			120 pairs of plaintexts.
+			\item The second phase has
+			\begin{equation}
+				S/N = \frac{2^6 \cdot 1}{4} = 16.
+			\end{equation}
+			Though \(S/N\) is lesser, we can use the 7-8 right pairs from the
+			first part.
+			\item We can reduce the data required by using quartets. In total,
+			about 240 ciphertexts are needed. 
+		\end{enumerate}
 	\end{frame}
 \end{document}
