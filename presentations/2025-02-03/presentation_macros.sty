@@ -6,7 +6,7 @@
 
 \usepackage{thmtools}
 
-\usepackage{hyperref}
+\usepackage{cleveref}
 \usepackage{longtable}
 \usepackage{mathtools}
 \usepackage{multirow}
@@ -18,6 +18,12 @@
 
 \usetikzlibrary{arrows}
 \usetikzlibrary{trees}
+
+\let\chyperref\cref
+\renewcommand{\cref}[1]{\hyperlink{#1}{\chyperref{#1}}}
+
+\crefname{table}{Table}{Tables}
+\crefname{figure}{Figure}{Figures}
 
 % **** IF YOU WANT TO DEFINE ADDITIONAL MACROS FOR YOURSELF, PUT THEM HERE:
 \DeclareMathOperator*{\argmax}{arg\,max}
