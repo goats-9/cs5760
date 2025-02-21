@@ -7,7 +7,7 @@ Description : Recover key for DES reduced to 6 rounds given black-box oracle
 """
 
 """
-Characteristic used:
+Characteristic OMEGA_1:
 L' = 00 00 04 00    R' = 00 00 00 20
 A' = 00 00 04 00    a' = 00 00 00 20    wp 3/8
 B' = 00 00 00 00    b' = 00 00 00 00    wp 1
@@ -16,11 +16,9 @@ C' = 00 00 04 00    c' = 00 00 00 20    wp 3/8
 d' = 00 00 04 00
 F' = c' ^ D' ^ l'
 
-Except S6, all inputs to S boxes in fourth round are zero.
-"""
+Except S6, input XOR to S boxes in fourth round are zero.
 
-"""
-Characteristic used:
+Characteristic OMEGA_2:
 L' = 00 00 00 08    R' = 00 00 04 00
 A' = 00 00 00 08    a' = 00 00 04 00    wp 11/32
 B' = 00 00 00 00    b' = 00 00 00 00    wp 1
@@ -29,9 +27,8 @@ C' = 00 00 00 08    c' = 00 00 04 00    wp 11/32
 d' = 00 00 00 08
 F' = c' ^ D' ^ l'
 
-Except S7, S8, all inputs to S boxes in fourth round are zero.
+Except S7, S8, input XOR to S boxes in fourth round are zero.
 """
-
 
 # Imports
 from util import *
@@ -39,45 +36,21 @@ from itertools import pairwise
 from pydes import des
 
 # Constants
-# ORACLE_URL="http://192.168.134.164:8000/"
-ORACLE_URL="http://127.0.0.1:5000/"
+ORACLE_URL="http://192.168.134.164:8000/"
 OMEGA_1=0x00000400_00000020
 OMEGA_2=0x00000008_00000400
+NUM_PAIRS=100
 NUM_TESTS=10
-
-random.seed(0)
 
 # Initialize ciphertext cache
 cache = Cache(ORACLE_URL)
 
 # Array of plaintext pairs (to be filtered after each step)
-quartets = [Quartet(OMEGA_1, OMEGA_2) for _ in range(100)]
+quartets = [Quartet(OMEGA_1, OMEGA_2) for _ in range(NUM_PAIRS)]
 
-# Set of S boxes having zero input XOR in last round
+# Set of S boxes (0-indexed) having zero input/output XOR in fourth round
 s1 = [0, 1, 2, 3, 4, 6, 7]
 s2 = [0, 1, 2, 3, 4, 5]
-
-# Test for right pairs
-# right = []
-# ctr = 0
-# while len(right) < 10:
-#     p0 = random.randint(0, (1 << 64) - 1)
-#     p1 = p0 ^ OMEGA_1
-#     c0 = cache.get(p0)
-#     c1 = cache.get(p1)
-#     c = OMEGA_1 & 0xffffffff
-#     l = (c0 ^ c1) >> 32 & 0xffffffff
-#     fo = l ^ c
-#     so = permute(fo, PR)
-#     if so & 0xfffff0ff == 0:
-#         print("right", p0, p1, hex(so))
-#         right.append((p0, p1))
-#     ctr += 1
-
-# print("attempts", ctr)
-# print("right pairs", right)
-
-# exit(0)
 
 # Master key
 master_key = 0
@@ -108,16 +81,7 @@ for i, c, s in ((0, OMEGA_1 & 0xffffffff, s1), (1, OMEGA_2 & 0xffffffff, s2)):
                 # characteristic object. For now we will hardcode it.
                 fo = l ^ c
                 # Get S_O by applying inverse of P.
-                so = permute(fo, PR)
-                # Check for right pair
-                right = True
-                for j in s:
-                    # Check if j-th block is zero
-                    if (so >> 28 - 4 * j) & 0xf:
-                        right = False
-                        break
-                if right:
-                    print(i, "right", p0, p1, so)
+                so = permute(fo, PI)
                 # Count for each pair of S boxes
                 # Get S_Ea and S_Eb for f, f^*.
                 sea0 = (se0 >> 6 * (7 - a)) & 0x3f
@@ -137,15 +101,14 @@ for i, c, s in ((0, OMEGA_1 & 0xffffffff, s1), (1, OMEGA_2 & 0xffffffff, s2)):
                         cnt[k] += 1
         # Take largest element
         k = max(enumerate(cnt), key=lambda x : x[1])[0]
-        print(a, b, ":", k, cnt[k], "actual key:", cnt[0])
+        print(a, b, ":", k, cnt[k])
         # Get the 6 bit keys
-        ka = k >> 6
+        ka = k >> 6 & 0x3f
         kb = k & 0x3f
-        # Put these values in their right places
         k6 &= ~(0x3f << 6 * (7 - a))
-        k6 |= (ka << 6 * (7 - a))
         k6 &= ~(0x3f << 6 * (7 - b))
-        k6 |= (kb << 6 * (7 - b))
+        k6 |= ka << 6 * (7 - a)
+        k6 |= kb << 6 * (7 - b)
 
 # K6 should be entirely found at this point. Let's add it to the key.
 
@@ -164,8 +127,8 @@ for i in range(1, 65):
         other.append(i)
 
 for i, j in enumerate(K6):
-    # key[K6[i]] = k6[i]
-    master_key |= ((k6 >> 47 - i) & 1) << 64 - j
+    # master_key[K6[i]] = k6[i]
+    master_key |= (k6 >> 63 - i & 1) << 64 - j
 
 # We bruteforce the remaining eight master key bits and do trial encryption.
 
@@ -181,11 +144,9 @@ for k in range(1 << 8):
     # The actual key that will go into the DES encryption has every eighth bit
     # as a parity bit. So, construct it as such
     for i in range(8):
-        # Take 7 bits at a time
-        y = 1
-        for j in range(7):
-            y ^= (key >> j) & 1
-        key |= y << (8 * i + 7)
+        # Take 8 bits at a time
+        block = key >> 8 * i & 0xff
+        key |= ((block.bit_count() & 1) ^ 1) << (8 * i + 7)
     # Perform trial encryption
     fl = True
     for p in test_pt:

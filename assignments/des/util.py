@@ -2,7 +2,7 @@ import random
 import requests
 from bs4 import BeautifulSoup as BS
 
-random.seed(42)
+random.seed(0)
 
 # S boxes
 WEAK_S_BOXES = [
@@ -74,9 +74,9 @@ P = [16,  7, 20, 21, 29, 12, 28, 17,
      19, 13, 30,  6, 22, 11,  4, 25]
 
 # Inverse of P
-PR = [0] * 32
+PI = [0] * 32
 for i in range(32):
-    PR[P[i] - 1] = i + 1
+    PI[P[i] - 1] = i + 1
 
 # Expansion matrix
 E = [32,  1,  2,  3,  4,  5,
@@ -91,9 +91,9 @@ E = [32,  1,  2,  3,  4,  5,
 # Apply permutation or any bitwise sequence (such as expansion)
 def permute(x: int, p: list[int]) -> int:
     y = 0
-    for j in p:
-        y <<= 1
-        y |= x >> j - 1 & 1
+    for j in reversed(p):
+        y |= (x & 1) << j - 1
+        x >>= 1
     return y
 
 class Cache:
@@ -101,6 +101,42 @@ class Cache:
         self.url = url
         self._cache: dict[int, int] = {}
 
+    def encrypt(self, plaintext: int) -> int:
+        """
+        Query the black-box encryption oracle given a plaintext.
+    
+        Parameters
+        ----------
+        plaintext: int
+            Plaintext for which corresponding ciphertext is required.
+        url: str
+            URL at which oracle is available.
+    
+        Returns
+        -------
+        Ciphertext corresponding to the queried plaintext.
+        """
+        print(f'Querying for {plaintext:016x}')
+        # Convert plaintext to bitstring
+        # Apply FP to get actual plaintext
+        pt = f'{permute(plaintext, FP):064b}'
+    
+        # Make the request
+        r = requests.post(url=self.url, data={
+            'plaintext': pt,
+        })
+    
+        # Parse the HTML response
+        res = BS(r.text, features='lxml').find('p', {'class': ['alert-secondary']})
+
+        # Ensure that the encrypted text exists
+        if res is None:
+            raise ValueError('Incorrect plaintext entered!')
+    
+        # Return the encrypted text, applying IP to undo FP
+        ct = permute(int(res.text, 2), IP)
+        return ct
+    
     # def encrypt(self, plaintext: int) -> int:
     #     """
     #     Query the black-box encryption oracle given a plaintext.
@@ -125,43 +161,9 @@ class Cache:
     #         'plaintext': pt,
     #     })
     
-    #     # Parse the HTML response
-    #     res = BS(r.text, features='lxml').find('p', {'class': ['alert-secondary']})
-    
-    #     # Ensure that the encrypted text exists
-    #     if res is None:
-    #         raise ValueError('Incorrect plaintext entered!')
-    
-    #     # Return the encrypted text, applying IP to undo FP
-    #     return permute(int(res.text, 2), IP)
-    
-    def encrypt(self, plaintext: int) -> int:
-        """
-        Query the black-box encryption oracle given a plaintext.
-    
-        Parameters
-        ----------
-        plaintext: int
-            Plaintext for which corresponding ciphertext is required.
-        url: str
-            URL at which oracle is available.
-    
-        Returns
-        -------
-        Ciphertext corresponding to the queried plaintext.
-        """
-        # Convert plaintext to bitstring
-        # Apply FP to get actual plaintext
-        pt = f'{permute(plaintext, FP):064b}'
-    
-        # Make the request
-        r = requests.post(url=self.url, data={
-            'plaintext': pt,
-        })
-    
-        ct = r.json()["ciphertext"]
-        assert len(ct) == 64, ValueError("Improper response!")
-        return permute(int(ct, 2), IP)
+    #     ct = r.json()["ciphertext"]
+    #     assert len(ct) == 64, ValueError("Improper response!")
+    #     return permute(int(ct, 2), IP)
     
     def insert(self, pt: int) -> None:
         if pt not in self._cache:
