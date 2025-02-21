@@ -36,10 +36,10 @@ WEAK_S_BOXES = [
      [12, 1, 2, 3, 4, 0, 11, 7, 6, 9, 15, 8, 5, 13, 14, 10], 
      [6, 3, 2, 1, 4, 5, 10, 7, 8, 9, 14, 11, 15, 13, 0, 12]],
 
-    [[2, 3, 1, 0, 5, 7, 4, 6, 9, 8, 11, 10, 13, 15, 14, 12], 
+    [[2, 3, 1, 6, 5, 7, 4, 6, 9, 8, 11, 10, 13, 15, 14, 12], 
      [1, 0, 2, 3, 5, 4, 7, 6, 10, 11, 8, 9, 15, 12, 13, 14], 
      [1, 2, 3, 0, 4, 7, 5, 6, 8, 10, 9, 11, 12, 14, 15, 13], 
-     [2, 1, 0, 3, 5, 7, 6, 4, 8, 10, 11, 9, 13, 14, 12, 15]],
+     [2, 1, 0, 3, 5, 7, 6, 4, 8, 10, 13, 9, 13, 14, 12, 15]],
 
     [[12, 14, 7, 3, 9, 5, 6, 2, 10, 4, 8, 11, 1, 13, 0, 15], 
      [0, 11, 7, 3, 15, 5, 6, 2, 8, 9, 10, 1, 12, 13, 14, 4], 
@@ -52,7 +52,7 @@ IP = [58, 50, 42, 34, 26, 18, 10, 2,
       60, 52, 44, 36, 28, 20, 12, 4,
       62, 54, 46, 38, 30, 22, 14, 6,
       64, 56, 48, 40, 32, 24, 16, 8,
-      57, 49, 41, 33, 25, 17, 9, 1,
+      57, 49, 41, 33, 25, 17,  9, 1,
       59, 51, 43, 35, 27, 19, 11, 3,
       61, 53, 45, 37, 29, 21, 13, 5,
       63, 55, 47, 39, 31, 23, 15, 7]
@@ -65,35 +65,35 @@ FP = [40, 8, 48, 16, 56, 24, 64, 32,
       36, 4, 44, 12, 52, 20, 60, 28,
       35, 3, 43, 11, 51, 19, 59, 27,
       34, 2, 42, 10, 50, 18, 58, 26,
-      33, 1, 41, 9, 49, 17, 57, 25]
+      33, 1, 41,  9, 49, 17, 57, 25]
 
 # Permutation made after each round
-P = [16, 7, 20, 21, 29, 12, 28, 17,
-     1, 15, 23, 26, 5, 18, 31, 10,
-     2, 8, 24, 14, 32, 27, 3, 9,
-     19, 13, 30, 6, 22, 11, 4, 25]
+P = [16,  7, 20, 21, 29, 12, 28, 17,
+      1, 15, 23, 26,  5, 18, 31, 10,
+      2,  8, 24, 14, 32, 27,  3,  9,
+     19, 13, 30,  6, 22, 11,  4, 25]
 
 # Inverse of P
-PI = [0] * 32
-for i in range(len(P)):
-    PI[P[i] - i] = i
+PR = [0] * 32
+for i in range(32):
+    PR[P[i] - 1] = i + 1
 
 # Expansion matrix
-E = [32, 1, 2, 3, 4, 5,
-     4, 5, 6, 7, 8, 9,
-     8, 9, 10, 11, 12, 13,
+E = [32,  1,  2,  3,  4,  5,
+      4,  5,  6,  7,  8,  9,
+      8,  9, 10, 11, 12, 13,
      12, 13, 14, 15, 16, 17,
      16, 17, 18, 19, 20, 21,
      20, 21, 22, 23, 24, 25,
      24, 25, 26, 27, 28, 29,
-     28, 29, 30, 31, 32, 1]
+     28, 29, 30, 31, 32,  1]
 
-# Apply permutation or any bitwise sequence
+# Apply permutation or any bitwise sequence (such as expansion)
 def permute(x: int, p: list[int]) -> int:
     y = 0
-    for i, j in enumerate(p):
+    for j in p:
         y <<= 1
-        y |= (x >> (j - 1)) & 1
+        y |= x >> j - 1 & 1
     return y
 
 class Cache:
@@ -168,18 +168,16 @@ class Cache:
             self._cache[pt] = self.encrypt(pt)
     
     def get(self, pt: int) -> int:
-        if pt not in self._cache:
-            self.insert(pt)
+        self.insert(pt)
         return self._cache[pt]
 
 class Quartet:
     def __init__(self, a0: int, a1: int, p: int | None = None, block_size: int = 8) -> None:
         if p is None:
-            p = random.randint(0, 1 << 64 - 1)
+            p = random.randint(0, (1 << 8 * block_size) - 1)
         self.p = p
         self.a0 = a0
         self.a1 = a1
-        self.n = block_size
 
     def get(self, i: int) -> tuple[int, int, int, int]:
         if i not in [0, 1]:
@@ -204,14 +202,9 @@ class SBoxDES:
         for row in s_box:
             if len(row) != 16:
                 raise ValueError('Incorrect dimensions for S box')
-            mask = 0
             for val in row:
                 if val < 0 or val >= 16:
                     raise ValueError('Incorrect output for S box')
-                mask |= 1 << val
-            if mask + 1 != 1 << 16:
-                print(row, mask)
-                raise ValueError('S box row is not a permutation')
         self.s_box = s_box
     
     def get(self, index: int) -> int:
@@ -228,27 +221,25 @@ class SBoxDES:
         4-bit output of the S box for the given input.
         """
         # Get the first and last bits
-        i = (((index >> 5) & 1) << 1) + (index & 1)
+        i = 2 * (index >> 5 & 1) + (index & 1)
         # Get the middle 4 bits
-        j = (index >> 1) & 15
+        j = index >> 1 & 0xf
         # Return the value
         return self.s_box[i][j]
     
     def ddt(self) -> list[list[int]]:
         """
-        Calculates the differential distribution table (DDT) of a given S box. The
-        dimensions are `n x m`, where `n` denotes the total number of elements
-        in the S box and `m = len(s_box[0])`.
+        Calculates the differential distribution table (DDT) of the S box.
 
         Returns
         -------
-        DDT of `s_box` as a `list[list[int]]` with the specified dimension.
+        DDT as a `list[list[int]]`. For DES S boxes, the DDT has dimensions 64
+        by 16.
         """
-        ddt = [[0] * 16] * 64
+        ddt = [[0] * 16 for _ in range(64)]
         for i in range(64):
-            for k in range(64):
-                # We take the plaintexts 0, i for ease
-                ddt[i][self.get(k) ^ self.get(i ^ k)] += 1
+            for j in range(64):
+                ddt[i ^ j][self.get(i) ^ self.get(j)] += 1
         return ddt
 
 S = [SBoxDES(sbox) for sbox in WEAK_S_BOXES]
