@@ -1,161 +1,144 @@
 """
-File        : recover.py
-Author      : Gautam Singh
-Date        : 2025-02-11
-Description : Recover key for DES reduced to 6 rounds given black-box oracle 
-              access.
-"""
-
-"""
-Characteristic OMEGA_1:
+OMEGA_1
 L' = 00 00 04 00    R' = 00 00 00 20
 A' = 00 00 04 00    a' = 00 00 00 20    wp 3/8
 B' = 00 00 00 00    b' = 00 00 00 00    wp 1
 C' = 00 00 04 00    c' = 00 00 00 20    wp 3/8
+                    d' = 00 00 04 00
 
-d' = 00 00 04 00
-F' = c' ^ D' ^ l'
+Except S6, all other S boxes have zero XOR input in the fourth round.
 
-Except S6, input XOR to S boxes in fourth round are zero.
-
-Characteristic OMEGA_2:
+OMEGA_2
 L' = 00 00 00 08    R' = 00 00 04 00
 A' = 00 00 00 08    a' = 00 00 04 00    wp 11/32
 B' = 00 00 00 00    b' = 00 00 00 00    wp 1
 C' = 00 00 00 08    c' = 00 00 04 00    wp 11/32
+                    d' = 00 00 00 08
 
-d' = 00 00 00 08
+Except S7 and S8, all other S boxes have zero XOR input in the fourth round.
+
 F' = c' ^ D' ^ l'
-
-Except S7, S8, input XOR to S boxes in fourth round are zero.
+When D' = 0, F' = c' ^ l'. Both are known values.
 """
 
 # Imports
 from util import *
-from itertools import pairwise
-from pydes import des
+from constants import *
+from oracle.des import des_encrypt
+
+random.seed(420)
 
 # Constants
-ORACLE_URL="http://192.168.134.164:8000/"
-OMEGA_1=0x00000400_00000020
-OMEGA_2=0x00000008_00000400
-NUM_PAIRS=100
+# Characteristic 1
+OMEGA_1 = 0x00000400_00000020
+S1 = [0, 1, 2, 3, 4, 6, 7]
+
+# Characteristic 2
+OMEGA_2 = 0x00000008_00000400
+S2 = [0, 1, 2, 3, 4, 5]
+
+ORACLE_URL='http://192.168.134.164:8000/'
+# ORACLE_URL='http://127.0.0.1:5000/'
+NUM_QUARTETS=50
 NUM_TESTS=10
 
-# Initialize ciphertext cache
 cache = Cache(ORACLE_URL)
+q = Quartet(OMEGA_1, OMEGA_2, NUM_QUARTETS)
 
-# Array of plaintext pairs (to be filtered after each step)
-quartets = [Quartet(OMEGA_1, OMEGA_2) for _ in range(NUM_PAIRS)]
+class Node:
+    def __init__(self, mask: list[int]) -> None:
+        self.mask = mask
 
-# Set of S boxes (0-indexed) having zero input/output XOR in fourth round
-s1 = [0, 1, 2, 3, 4, 6, 7]
-s2 = [0, 1, 2, 3, 4, 5]
+def unite(a: Node, b: Node) -> Node:
+    assert len(a.mask) == len(b.mask), f'Expected masks of same length, got {len(a.mask)} != {len(b.mask)}'
+    return Node([am & bm for am, bm in zip(a.mask, b.mask)])
 
-# Master key
-master_key = 0
+def max_clique(nodes: list[Node], n: Node, vis: int) -> int:
+    if 0 in n.mask:
+        return 0
+    res = vis
+    m = -1
+    for i in range(len(nodes)):
+        if vis & (1 << i):
+            m = i
+    for i in range(m + 1, len(nodes)):
+        v = nodes[i]
+        if vis & (1 << i):
+            continue
+        nn = unite(n, v)
+        res = max(res, max_clique(nodes, nn, vis | (1 << i)), key=lambda x: x.bit_count())
+    return res
 
-# Final round subkey
-k6 = 0
+k6 = [(1 << 64) - 1 for _ in range(8)]
 
-for i, c, s in ((0, OMEGA_1 & 0xffffffff, s1), (1, OMEGA_2 & 0xffffffff, s2)):
-    # Counting for omega_i
-    for a, b in pairwise(s):
-        cnt = [0] * (1 << 12)
-        for q in quartets:
-            x0, x1, y0, y1 = q.get(i)
-            # Have to analyze pairs (x0, x1), (y0, y1)
-            for p0, p1 in ((x0, x1), (y0, y1)):
-                # Get ciphertexts
-                pc0 = cache.get(p0)
-                pc1 = cache.get(p1)
-                # Extract f, f^*
-                f0 = pc0 & 0xffffffff
-                f1 = pc1 & 0xffffffff
-                # Get S_E and S_E^*
-                se0 = permute(f0, E)
-                se1 = permute(f1, E)
-                # Extract l'
-                l = (pc0 ^ pc1) >> 32 & 0xffffffff
-                # Get F'. We need c' which we would get from a 
-                # characteristic object. For now we will hardcode it.
-                fo = l ^ c
-                # Get S_O by applying inverse of P.
-                so = permute(fo, PI)
-                # Count for each pair of S boxes
-                # Get S_Ea and S_Eb for f, f^*.
-                sea0 = (se0 >> 6 * (7 - a)) & 0x3f
-                sea1 = (se1 >> 6 * (7 - a)) & 0x3f
-                seb0 = (se0 >> 6 * (7 - b)) & 0x3f
-                seb1 = (se1 >> 6 * (7 - b)) & 0x3f
-                # Get S_Oa and S_Ob, these are 4 bit outputs.
-                soa = (so >> 4 * (7 - a)) & 0xf
-                sob = (so >> 4 * (7 - a)) & 0xf
-                # Go through all 2^12 combinations
-                for k in range(1 << 12):
-                    # Get S_Ka and S_Kb
-                    ska = (k >> 6) & 0x3f
-                    skb = k & 0x3f
-                    # Perform the check
-                    if S[a].get(sea0 ^ ska) ^ S[a].get(sea1 ^ ska) == soa and S[b].get(seb0 ^ skb) ^ S[b].get(seb1 ^ skb) == sob:
-                        cnt[k] += 1
-        # Take largest element
-        k = max(enumerate(cnt), key=lambda x : x[1])[0]
-        print(a, b, ":", k, cnt[k])
-        # Get the 6 bit keys
-        ka = k >> 6 & 0x3f
-        kb = k & 0x3f
-        k6 &= ~(0x3f << 6 * (7 - a))
-        k6 &= ~(0x3f << 6 * (7 - b))
-        k6 |= ka << 6 * (7 - a)
-        k6 |= kb << 6 * (7 - b)
+for i, c, s in ((1, OMEGA_1 & 0xffffffff, S1), (2, OMEGA_2 & 0xffffffff, S2)):
+    nodes = []
+    for p0, p1 in q.get(i):
+        c0 = transform(cache.get(transform(p0, FP)), IP)
+        c1 = transform(cache.get(transform(p1, FP)), IP)
+        f0 = c0 & 0xffffffff
+        f1 = c1 & 0xffffffff
+        se0 = transform(f0, E)
+        se1 = transform(f1, E)
+        l = (c0 ^ c1) >> 32 & 0xffffffff
+        fo = c ^ l
+        so = transform(fo, PI)
+        mask = []
+        for j in s:
+            bm = 0
+            sej0 = se0 >> 6 * (7 - j) & 0x3f
+            sej1 = se1 >> 6 * (7 - j) & 0x3f
+            soj = so >> 4 * (7 - j) & 0xf
+            for k in range(1 << 6):
+                if S[j].get(sej0 ^ k) ^ S[j].get(sej1 ^ k) == soj:
+                    bm |= 1 << k
+            mask.append(bm)
+        nodes.append(Node(mask))
+    start = Node([(1 << 64) - 1 for _ in s])
+    cliq = max_clique(nodes, start, 0)
+    for i in range(len(nodes)):
+        if cliq & (1 << i):
+            start = unite(start, nodes[i])
+    for x, j in zip(start.mask, s):
+        k6[j] &= x
 
-# K6 should be entirely found at this point. Let's add it to the key.
+subkey = 0
 
-# Key bits of K6
-K6 = [ 3, 44, 27, 17, 42, 10, 26, 50,
-      60,  2, 41, 35, 25, 57, 19, 18, 
-       1, 51, 52, 59, 58, 49, 11, 34,
-      13, 23, 30, 45, 63, 62, 38, 21,
-      31, 12, 14, 55, 20, 47, 29, 54,
-       6, 15,  4,  5, 39, 53, 46, 22]
+for x in k6:
+    print(f'{x:064b}')
 
-# Other key bits
+for x in k6:
+    assert x.bit_count() == 1, f'Expected 1 suggested key, got {x.bit_count()}. Try again with another seed!'
+    subkey <<= 6
+    block = (x & -x).bit_length() - 1
+    subkey |= block
+
 other = []
 for i in range(1, 65):
-    if i not in K6 and i % 8 != 0:
+    if i not in K6 and i % 8:
         other.append(i)
 
-for i, j in enumerate(K6):
-    # master_key[K6[i]] = k6[i]
-    master_key |= (k6 >> 63 - i & 1) << 64 - j
+master_key = list(x for x in f'{transform(subkey, K6I):064b}')
 
-# We bruteforce the remaining eight master key bits and do trial encryption.
-
-# Generate random plaintexts for trial encryption
 test_pt = [random.randint(0, (1 << 64) - 1) for _ in range(NUM_TESTS)]
 
-d = des()
-
-for k in range(1 << 8):
+# Brute force on remaining key bits
+for k in range(1 << len(other)):
     key = master_key
     for i, j in enumerate(other):
-        key |= ((k >> i) & 1) << 64 - j
-    # The actual key that will go into the DES encryption has every eighth bit
-    # as a parity bit. So, construct it as such
+        key[j - 1] = str(k >> i & 1)
     for i in range(8):
-        # Take 8 bits at a time
-        block = key >> 8 * i & 0xff
-        key |= ((block.bit_count() & 1) ^ 1) << (8 * i + 7)
-    # Perform trial encryption
+        sm = sum(ord(x) - ord('0') for x in key[8 * i: 8 * i + 7])
+        key[8 * i + 7] = chr(ord('0') + ((sm + 1) & 1))
     fl = True
-    for p in test_pt:
-        pb = p.to_bytes(8)
-        cb = cache.get(p).to_bytes(8)
-        fl = fl and d.encrypt(key.to_bytes(8), pb) == cb
+    for pt in test_pt:
+        ct = cache.get(pt)
+        test_ct = int(des_encrypt(f'{pt:064b}', ''.join(key)), 2)
+        if ct != test_ct:
+            fl = False
+            break
     if fl:
-        print(f"Cryptanalysis Successful!")
-        print(f"Master key: {key}")
+        print(f'Key: {''.join(key)}')
         exit(0)
-print(f"Cryptanalysis Failed!")
+print('Cryptanalysis failed!')
 exit(1)
