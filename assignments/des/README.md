@@ -8,7 +8,7 @@ To run this code, a working installation of Python 3 is required. Install the
 required packages by issuing the following command.
 
 ```bash
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 To create the DDTs for all S boxes, run the following command.

@@ -191,7 +191,7 @@ for i in range(1, 65):
         other.append(i)
 
 # Create master key from known key bits (unknown ones are set to zero for now).
-master_key = list(x for x in f'{transform(subkey, K6I):064b}')
+master_key = transform(subkey, K6I)
 
 # Create test plaintexts for verification
 test_pt = [random.randint(0, (1 << 64) - 1) for _ in range(NUM_TESTS)]
@@ -201,24 +201,25 @@ for k in range(1 << len(other)):
     key = master_key
     # Add in remaining key bits
     for i, j in enumerate(other):
-        key[j - 1] = str(k >> i & 1)
+        key |= (k >> i & 1) << 64 - j
     # Compute parity bits
     for i in range(8):
-        sm = sum(ord(x) - ord('0') for x in key[8 * i: 8 * i + 7])
-        key[8 * i + 7] = chr(ord('0') + ((sm + 1) & 1))
+        blk = key >> 8 * i & 0xff
+        b = (blk.bit_count() + 1) & 1
+        key |= b << 8 * i
     # Verify key created
     fl = True
     for pt in test_pt:
         ct = cache.get(pt)
-        test_ct = int(des_encrypt(f'{pt:064b}', ''.join(key)), 2)
+        test_ct = int(des_encrypt(f'{pt:064b}', f'{key:064b}'), 2)
         if ct != test_ct:
             fl = False
             break
     if fl:
         # Output key and subkeys in binary format
-        print(f'Master key: {''.join(key)}')
+        print(f'Master key: {key:064b}')
         print('Round subkeys')
-        round_subkeys = generate_subkeys(key)
+        round_subkeys = generate_subkeys(f'{key:064b}')
         for i, ki in enumerate(round_subkeys):
             print(f'\tK{i+1}: {''.join(ki)}')
         exit(0)
