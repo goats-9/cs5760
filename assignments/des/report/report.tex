@@ -47,22 +47,52 @@ From the DDT of S7, we see that \(04_x \rightarrow 2_x\) with probability
 \rightarrow 4_x\) with probability \(\frac{22}{64} = \frac{11}{32}\). These are
 two ``desirable'' input-output XOR pairs in the context of the discussion above.
 
-Each of these pairs forms their own characteristic as shown in
-\autoref{fig:char1} and \autoref{fig:char2}.
+Each pair is used to create a characteristic, as shown in \autoref{fig:char1}
+and \autoref{fig:char2}.
 
 \begin{figure}[!ht]
     \centering
     \includegraphics[width=\columnwidth]{images/char1.pdf}
-    \caption{Characteristic used for cryptanalysis with probability \(\frac{9}{64}\).}
+    \caption{Characteristic \(\Omega^1\) used for cryptanalysis.}
     \label{fig:char1}
 \end{figure}
 
 \begin{figure}[!ht]
     \centering
     \includegraphics[width=\columnwidth]{images/char2.pdf}
-    \caption{Characteristic used for cryptanalysis with probability \(\frac{121}{1024}\).}
+    \caption{Characteristic \(\Omega^2\) used for cryptanalysis.}
     \label{fig:char2}
 \end{figure}
+
+The characteristic \(\Omega^1\) has probability \(\brak{\frac{3}{8}}^2 =
+\frac{9}{64}\). Here, \(d^\prime = C^\prime = 00\ 00\ 04\ 00_x\). Thus, in the
+fourth round, all S boxes except S6 have zero XOR input. Since \(F^\prime =
+c^\prime \oplus D^\prime \oplus l^\prime\), it follows that 42 bits of
+\(F^\prime\) are known. Thus, the clique method
+\cite{bihamDifferentialCryptanalysisDESlike1991} can be used to get all subkey
+bits except those entering S6 in the sixth round. Hence, we require another
+characteristic having zero XOR input into S6 in the fourth round.
+
+The characteristic \(\Omega^2\) has probability \(\brak{\frac{11}{32}}^2 =
+\frac{121}{1024}\). Here, \(d^\prime = C^\prime = 00\ 00\ 00\ 08_x\). Thus, in
+the fourth round, all S boxes except S7 and S8 have zero XOR input. Since
+\(F^\prime = c^\prime \oplus D^\prime \oplus l^\prime\), it follows that 36 bits
+of \(F^\prime\) are known. In particular, we can also find the key bits entering
+S6 in the sixth round.
+
+Combining both characteristics, we will be able to extract K6 entirely. The
+signal to noise ratio using the clique method for \(\Omega^1\) is \(S/N =
+\frac{2^{42} \cdot \frac{9}{64}}{4^7} \approx 2^{25.17}\), and for \(\Omega^2\)
+is \(S/N = \frac{2^{36} \cdot \frac{121}{1024}}{4^6} = 2^{20.92}\).
+
+Clearly, the signal to noise ratio for both characteristics is very high and
+only 7-8 right pairs are required per characteristic. Accounting for the
+characteristic probability, we require approximately 70 plaintext pairs of each
+characteristic for cryptanalysis. By packing these into quartets, we require
+about 70 pairs in total, which will cost \(70 \times 2 = 140\) plaintext
+encryptions. Our implementation uses 50 quartets, which equals to \(50 \times 4
+= 200\) plaintext encryptions. For verification, we choose 20 random plaintexts,
+which gives us a total of \(220\) plaintexts required.
 
 \section{Cryptanalysis}
 \label{sec:recovery}
@@ -92,10 +122,10 @@ object. The clique algorithm itself is implemented as a naive backtracking
 algorithm. It is fast in practice due to the randomly chosen plaintexts which
 reduce the size of the maximal clique greatly, thereby pruning the search space.
 
-\subsection{Summary and Complexity Analysis}
+\subsection{Overview of the Attack}
 \label{subsec:summary}
 
-In summary, the attack proceeds as follows.
+At a high level, the attack proceeds as follows.
 
 \begin{enumerate}
     \item Generate quartets and their corresponding ciphertexts.
