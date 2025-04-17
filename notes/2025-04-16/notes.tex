@@ -1,0 +1,223 @@
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+
+\documentclass[twoside]{article}
+%\usepackage{soul}
+\usepackage{./lecnotes_macros}
+
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURERS**}{**SCRIBE**}
+\lecture{7}{Yoyo Tricks with AES}{Maria Francis and M. V. Panduranga Rao}{Gautam Singh}{16 April 2025}
+%\footnotetext{These notes are partially based on those of Nigel Mansell.}
+
+%All figures are to be placed in a separate folder named ``images''
+
+% **** YOUR NOTES GO HERE:
+
+\section{Introduction}
+
+The yoyo game was introduced by Biham et al. in the cryptanalysis of SKIPJACK in
+1998. It is based on making new pairs of plaintexts and ciphertexts that
+preserve a certain property inherited from the original pair. This leads to a
+partition of the plaintext and ciphertext spaces where each partition is closed
+under exchange operations. 
+
+The yoyo game is quite similar to the boomerang attack, and has been used to
+build distinguishers for Feistel networks. They can also attack substitution
+permutation networks (SPNs) that iterate a round function \(A \circ S\) where
+\(A\) is an affine transformation and \(S\) is a non-linear S-box layer. 
+
+\section{Yoyo Analysis of Generic SPNs}
+
+For simplicity, we analyse permutations on \(\bF_q^n\) for \(q = 2^k\) of the
+form \(F\brak{x} = S \circ L \circ S \circ L \circ S\), where \(L\) is a linear
+transformation as opposed to an affine transformation. An element of \(\bF_q^n\)
+is of the form \(\alpha = \brak{\alpha_0, \alpha_1, \ldots, \alpha_n}\) where
+each \(\alpha_i \in \bF_q\) is called a \emph{word}.
+
+To compare two differences according to their zero positions, we use the
+following.
+
+\begin{definition}[Zero Difference Pattern]
+    \label{def:zero-diff}
+    Let \(\alpha \in \bF_q^n\). Then, the zero difference pattern of \(\alpha\)
+    is given by
+    \begin{equation}
+        \nu\brak{\alpha} \triangleq \brak{z_0, z_1, \ldots, z_{n - 1}}
+        \label{eq:zero-diff}
+    \end{equation}
+    where \(z_i = 1\) if \(\alpha_i = 0\) or \(z_i = 0\) otherwise.
+\end{definition}
+
+Clearly, \(\nu\brak{\alpha} \in \bF_2^n\) and the complement of the
+zero-difference pattern is called the \emph{activity pattern}. Linear
+transformations do not preserve the zero difference pattern, but permutations
+do.
+
+\begin{lemma}
+    \label{lem:zero-diff-perm}
+    For two states \(\alpha, \beta \in \bF_q^n\), the zero pattern of their
+    difference is preserved through \(S\). Mathematically,
+    \begin{equation}
+        \nu\brak{\alpha \oplus \beta} = \nu\brak{S\brak{\alpha} \oplus S\brak{\beta}}.
+        \label{eq:zero-diff-perm}
+    \end{equation}
+\end{lemma}
+\begin{proof}
+    This is evident from the fact that \(\alpha_i \oplus \beta_i = 0 \iff
+    s\brak{\alpha_i} \oplus s\brak{\beta_i} = 0\) since \(s\) is a permutation.
+\end{proof}
+
+We make extensive use of the following definition.
+
+\begin{definition}
+    \label{def:rho-v}
+    For a vector \(v \in \bF_2^n\) and a pair of states \(\alpha, \beta \in
+    \bF_q^n\) define \(\rho^v\brak{\alpha, \beta} \in \bF_q^n\) where
+    \begin{equation}
+        \rho^v\brak{\alpha, \beta}_i \triangleq \alpha_iv_i \oplus \beta_i\brak{v_i \oplus 1} =
+        \begin{cases}
+            \alpha_i & v_i = 1 \\
+            \beta_i & v_i = 0
+        \end{cases}.
+        \label{eq:rho-v-def}
+    \end{equation}
+\end{definition}
+
+From the definition it is evident that
+
+\begin{equation}
+    \rho^v\brak{\alpha, \beta} \oplus \rho^v\brak{\beta, \alpha} = \alpha \oplus \beta.
+    \label{eq:rho-xor}
+\end{equation}
+
+The function \(\rho^v\) has some interesting properties which are stated and
+proved below.
+
+\begin{lemma}
+    \label{lem:rho-perm}
+    Let \(\alpha, \beta \in \bF_q^n\) and \(v \in \bF_2^n\). Then, \(\rho\)
+    commutes with the S-box layer. Mathematically,
+    \begin{equation}
+        \rho^v\brak{S\brak{\alpha}, S\brak{\beta}} = S\brak{\rho^v\brak{\alpha, \beta}}
+        \label{eq:rho-s-invariant}
+    \end{equation}
+    and thus
+    \begin{equation}
+        S\brak{\alpha} \oplus S\brak{\beta} = S\brak{\rho^v\brak{\alpha, \beta}} \oplus S\brak{\rho^v\brak{\beta, \alpha}}.
+    \end{equation}
+\end{lemma}
+\begin{proof}
+    \(S\) operates on each word independently and the result follows immediately
+    from \autoref{def:rho-v}.
+\end{proof}
+
+\begin{lemma}
+    \label{lem:rho-lin}
+    For a linear transformation \(L\brak{x} = L\brak{x_0, x_1, \ldots, x_{n -
+    1}}\) acting on \(n\) words we have
+    \begin{equation}
+        L\brak{\alpha} \oplus L\brak{\beta} = L\brak{\rho^v\brak{\alpha, \beta}} \oplus L\brak{\rho^v\brak{\beta, \alpha}}
+    \end{equation}
+    for any \(v \in \bF_2^n\).
+\end{lemma}
+\begin{proof}
+    Using \eqref{eq:rho-xor} and the linearity of \(L\), we have
+    \begin{equation}
+        L\brak{\alpha} \oplus L\brak{\beta} = L\brak{\alpha \oplus \beta} = L\brak{\rho^v\brak{\alpha, \beta} \oplus \rho^v\brak{\beta, \alpha}} = L\brak{\rho^v\brak{\alpha, \beta}} \oplus L\brak{\rho^v\brak{\beta, \alpha}}
+    \end{equation}
+    as desired.
+\end{proof}
+
+Using \autoref{lem:rho-perm} and \autoref{lem:rho-lin}, we have
+
+\begin{equation}
+    L\brak{S\brak{\alpha}} \oplus L\brak{S\brak{\beta}} = L\brak{S\brak{\rho^v\brak{\alpha, \beta}}} \oplus L\brak{S\brak{\rho^v\brak{\beta, \alpha}}},
+    \label{eq:l-comp-s}
+\end{equation}
+
+however switching \(S\) and \(L\) does not guarantee equality in
+\eqref{eq:l-comp-s}.
+
+Observe that the zero difference pattern does not change when we apply \(L\) or
+\(S\) to any pair \(\alpha^\prime = \rho^v\brak{\alpha, \beta}\) and
+\(\beta^\prime = \rho^v\brak{\beta, \alpha}\). Thus, unlike \eqref{eq:l-comp-s},
+it can be shown that
+
+\begin{equation}
+    \nu\brak{S\brak{L\brak{\alpha}} \oplus S\brak{L\brak{\beta}}} = \nu\brak{S\brak{L\brak{\rho^v\brak{\alpha, \beta}}} \oplus S\brak{L\brak{\rho^v\brak{\beta, \alpha}}}}.
+    \label{eq:nu-s-comp-l}
+\end{equation}
+
+In other words, although equality may not hold, the differences are zero in
+exactly the same positions when \(S \circ L\) is applied.
+
+The above results can be summarised as \autoref{thm:yoyo}, which is heavily used
+in the yoyo attack.
+
+\begin{theorem}
+    \label{thm:yoyo}
+    Let \(\alpha, \beta \in \bF_q^n\) and \(\alpha^\prime = \rho^v\brak{\alpha,
+    \beta}, \beta^\prime = \rho^v\brak{\beta, \alpha}\). Then,
+    \begin{equation}
+        \nu\brak{S \circ L \circ S\brak{\alpha} \oplus S \circ L \circ S\brak{\beta}} = \nu\brak{S \circ L \circ S\brak{\alpha^\prime} \oplus S \circ L \circ S\brak{\beta^\prime}}.
+        \label{eq:yoyo}
+    \end{equation}
+\end{theorem}
+\begin{proof}
+    The proof follows from the following observations.
+    \begin{enumerate}
+        \item \autoref{lem:rho-perm} gives \(S\brak{\alpha} \oplus S\brak{\beta}
+        = S\brak{\alpha^\prime} \oplus S\brak{\beta^\prime}\).
+        \item The linearity of \(L\) gives \(L\brak{S\brak{\alpha}} \oplus
+        L\brak{S\brak{\beta}} = L\brak{S\brak{\alpha^\prime}} \oplus
+        L\brak{S\brak{\beta^\prime}}\).
+        \item Finally, \autoref{lem:zero-diff-perm} gives \eqref{eq:yoyo}.
+    \end{enumerate} 
+\end{proof}
+
+\subsection{Yoyo Distinguisher for Two Generic SP-Rounds}
+
+Two generic SP rounds can be represented as \(G_2^\prime = L \circ S \circ L
+\circ S\), where the last linear layer can be removed to instead represent it as
+\(G_2 = S \circ L \circ S\). If we fix a pair of plaintexts \(p^0, p^1\) with a
+paritcular zero difference pattern \(\nu\brak{p^0 \oplus p^1}\), then from the
+corresponding ciphertexts \(c^0, c^1\), we can construct another pair of new
+ciphertexts \(c^{\prime 0}, c^{\prime 1}\) such that their decrypted plaintexts
+\(p^{\prime 0}, p^{\prime 1}\) also have the same zero difference pattern. This
+follows directly from \autoref{thm:yoyo} and holds with probability 1.
+
+\begin{theorem}[Generic Yoyo Game for Two SP-Rounds]
+    \label{thm:yoyo-2-rounds}
+    Let \(p^0 \oplus p^1 \in \bF_q^n\), \(c^0 = G_2\brak{p^0}\) and \(c^1 =
+    G_2\brak{p^1}\). Then for any \(v \in bF_2^n\), let \(c^{\prime 0} =
+    \rho^v\brak{c^0, c^1}\) and \(c^{\prime 1} = \rho^v\brak{c^1, c^0}\). Then,
+    \begin{equation}
+        \nu\brak{G_2^{-1}\brak{c^{\prime 0}} \oplus G_2^{-1}\brak{c^{\prime 1}}} = \nu\brak{p^{\prime 0} \oplus p^{\prime 1}} = \nu\brak{p^0 \oplus p^1}.
+        \label{eq:yoyo-2-rounds}
+    \end{equation}
+\end{theorem}
+\begin{proof}
+    Since \(S^{-1}\) is also a permutation and \(L^{-1}\) is a linear
+    transformation, we invoke \autoref{thm:yoyo} on \(G_2^{-1} = S^{-1} \circ
+    L^{-1} \circ S^{-1}\) to obtain \eqref{eq:yoyo-2-rounds}.
+\end{proof}
+
+\autoref{thm:yoyo-2-rounds} gives us a straightforward distinguisher for two
+generic SP-rounds requiring two plaintexts and two adaptively chosen
+ciphertexts. A random permutation would not give back a pair of decrypted
+plaintexts that still have the same zero difference pattern with very high
+probability. One can go the other way to generate two ciphertexts and then
+observe the ciphertexts of the adaptively chosen plaintexts.
+
+\subsection{Analysis of Three Generic SP-Rounds}
+
+
+
+\end{document}
