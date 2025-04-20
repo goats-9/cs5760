@@ -45,7 +45,7 @@
 \renewcommand{\theequation}{\thelecnum.\arabic{equation}}
 \renewcommand{\thefigure}{\thelecnum.\arabic{figure}}
 \renewcommand{\thetable}{\thelecnum.\arabic{table}}
-\newcommand{\algorithmautorefname}{Algorithm}
+\renewcommand{\thealgorithm}{\thelecnum.\arabic{algorithm}}
 
 %
 % The following macro is used to generate the header.
@@ -136,6 +136,9 @@
 \newcommand{\myvec}[1]{\ensuremath{\begin{pmatrix}#1\end{pmatrix}}}
 \newcommand{\mydet}[1]{\ensuremath{\begin{vmatrix}#1\end{vmatrix}}}
 \renewcommand{\vec}[1]{\boldsymbol{\mathbf{#1}}}
+\newcommand{\algorithmautorefname}{Algorithm}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 \allowdisplaybreaks
 
