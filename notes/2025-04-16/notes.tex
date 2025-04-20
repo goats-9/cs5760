@@ -281,7 +281,6 @@ written as
     R^{2\prime} = MC \circ SR \circ \brak{SB \circ MC \circ SB} \circ SR
     \label{eq:aes-2-rounds}
 \end{equation}
-
 where \(S = SB \circ MC \circ SB\) can be thought of as four parallel 32-bit
 super S-boxes. Finally, the initial \(SR\) has no effect, thus we can rewrite
 two rounds of AES as
@@ -521,7 +520,6 @@ of the 4 words is approximately
 \begin{equation}
     4p_b\brak{4 - t} = 4 \cdot \binom{4}{t} \cdot q^{t - 4}
 \end{equation}
-
 while for a correct pair it is \(4 \cdot q^{t - 4}\). Thus, each pair of
 plaintexts requires \(\frac{p_b\brak{4 - t}^{-1}}{4}\) plaintext pairs using the
 yoyo game. Thus, the total data complexity is
