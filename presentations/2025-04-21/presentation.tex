@@ -1,0 +1,943 @@
+% Set the document class and theme
+\documentclass[notheorems]{beamer}
+
+\setbeamertemplate{theorem}[ams style]
+\setbeamertemplate{theorems}[numbered]
+
+\makeatletter
+    \ifbeamer@countsect
+      \newtheorem{theorem}{\translate{Theorem}}[section]
+    \else
+      \newtheorem{theorem}{\translate{Theorem}}
+    \fi
+    \newtheorem{corollary}{\translate{Corollary}}
+    \newtheorem{fact}{\translate{Fact}}
+    \newtheorem{lemma}{\translate{Lemma}}
+    \newtheorem{problem}{\translate{Problem}}
+    \newtheorem{solution}{\translate{Solution}}
+
+    \theoremstyle{definition}
+    \newtheorem{definition}{\translate{Definition}}
+    \newtheorem{definitions}{\translate{Definitions}}
+
+    \theoremstyle{example}
+    \newtheorem{example}{\translate{Example}}
+    \newtheorem{examples}{\translate{Examples}}
+
+    % Compatibility
+    \newenvironment{Lemma}{\begin{lemma}}{\end{lemma}}
+    \newenvironment{Proof}{\begin{proof}}{\end{proof}}
+    \newenvironment{Theorem}{\begin{theorem}}{\end{theorem}}
+    \newenvironment{Problem}{\begin{problem}}{\end{problem}}
+    \newenvironment{Corollary}{\begin{corollary}}{\end{corollary}}
+    \newenvironment{Example}{\begin{example}}{\end{example}}
+    \newenvironment{Examples}{\begin{examples}}{\end{examples}}
+    \newenvironment{Definition}{\begin{definition}}{\end{definition}}
+\makeatother
+
+\usetheme{Madrid}
+\useoutertheme{miniframes} % Alternatively: miniframes, infolines, split
+\useinnertheme{circles}
+
+\definecolor{IITHorange}{RGB}{243, 130, 33} % UBC Blue (primary)
+\definecolor{IITHyellow}{RGB}{254, 203, 10} % UBC Grey (secondary)
+
+\setbeamercolor{palette primary}{bg=IITHorange,fg=white}
+\setbeamercolor{palette secondary}{bg=IITHorange,fg=white}
+\setbeamercolor{palette tertiary}{bg=IITHorange,fg=white}
+\setbeamercolor{palette quaternary}{bg=IITHorange,fg=white}
+\setbeamercolor{structure}{fg=IITHorange} % itemize, enumerate, etc
+\setbeamercolor{section in toc}{fg=IITHorange} % TOC sections
+
+% Override palette coloring with secondary
+\setbeamercolor{subsection in head/foot}{bg=IITHyellow,fg=white}
+
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{theorems}[numbered]
+
+\usepackage{./presentation_macros}
+
+\title[Cryptanalysis of DES]{CS5760: Yoyo Tricks with AES}
+\date{March 21, 2025}
+\author{Gautam Singh}
+\institute[IITH]{Indian Institute of Technology Hyderabad}
+
+\begin{document}
+    
+    \begin{frame}
+        \titlepage
+    \end{frame}
+    
+    \begin{frame}
+        \tableofcontents
+    \end{frame}
+    
+    \section{Introduction}
+    \label{sec:intro}
+    
+    \begin{frame}{Yoyo Game}
+        \begin{enumerate}
+            \item<1-> Introduced by Biham et. al in 1998 for cryptanalysis of
+            SKIPJACK. % TODO: cite
+            \item<2-> Main idea is to make new pairs of plaintexts and
+            ciphertexts that preserve a property from the original plaintext.
+            \item<3-> Partitions the plaintext and ciphertext spaces where each
+            partition is closed under exchange operations.
+            \item<4-> Similar to the boomerang attack and works with both
+            Feistel networks and substitution permutation networks (SPNs) that
+            iterate a round function \(A \circ S\), where \(A\) is an affine
+            transformation and \(S\) is a non-linear S-box layer.
+            \item<5-> For analysis, we consider permutations that iterate \(L
+            \circ S\), where \(L\) is a linear transformation.
+        \end{enumerate}
+    \end{frame}
+
+    \section{Yoyo Analysis of Generic SPNs}
+    \label{sec:yoyo-generic-analysis}
+
+    \subsection{Zero Difference Pattern and its Properties}
+    \label{subsec:zero-diff-pattern}
+    
+    \begin{frame}{Zero Difference Pattern}
+        Suppose \(q = 2^k\). Let \(\alpha = \brak{\alpha_0, \alpha_1, \ldots,
+        \alpha_{n - 1}} \in \bF_q^n\), where each \(\alpha_i \in \bF_q\) is
+        called a \emph{word}.
+        \pause
+        \begin{definition}[Zero Difference Pattern]
+            \label{def:zero-diff}
+            Let \(\alpha \in \bF_q^n\). Then, the zero difference pattern of
+            \(\alpha\) is given by
+            \begin{equation}
+                \nu\brak{\alpha} \triangleq \brak{z_0, z_1, \ldots, z_{n - 1}}
+                \label{eq:zero-diff}
+            \end{equation}
+            where \(z_i = 1\) if \(\alpha_i = 0\) or \(z_i = 0\) otherwise.
+        \end{definition}
+        \pause
+        Observe that \(\nu\brak{\alpha} \in \bF_2^n\). The complement of
+        \(\nu\brak{\alpha}\) is called the \emph{activity pattern}.
+    \end{frame}
+
+    \begin{frame}{Properties of Zero Difference Pattern}
+        \begin{lemma}
+            \label{lem:zero-diff-perm}
+            For two states \(\alpha, \beta \in \bF_q^n\), the zero pattern of
+            their difference is preserved through \(S\). Mathematically,
+            \begin{equation}
+                \nu\brak{\alpha \oplus \beta} = \nu\brak{S\brak{\alpha} \oplus S\brak{\beta}}.
+                \label{eq:zero-diff-perm}
+            \end{equation}
+        \end{lemma}
+        \pause
+        \begin{proof}
+            This is evident from the fact that \(\alpha_i \oplus \beta_i = 0
+            \iff s\brak{\alpha_i} \oplus s\brak{\beta_i} = 0\) since \(s\) is a
+            permutation.
+        \end{proof}
+    \end{frame}
+
+    \subsection{Mixture of Pairs and its Properties}
+
+    \begin{frame}{Mixture of Pairs}
+        \begin{definition}
+            \label{def:rho-v}
+            For a vector \(v \in \bF_2^n\) and a pair of states \(\alpha, \beta
+            \in \bF_q^n\) define \(\rho^v\brak{\alpha, \beta} \in \bF_q^n\)
+            where
+            \begin{equation}
+                \rho^v\brak{\alpha, \beta}_i \triangleq \alpha_iv_i \oplus \beta_i\brak{v_i \oplus 1} =
+                \begin{cases}
+                    \alpha_i & v_i = 1 \\
+                    \beta_i & v_i = 0
+                \end{cases}.
+                \label{eq:rho-v-def}
+            \end{equation}
+        \end{definition}
+        \pause
+        From the definition it is evident that
+        \begin{equation}
+            \rho^v\brak{\alpha, \beta} \oplus \rho^v\brak{\beta, \alpha} = \alpha \oplus \beta.
+            \label{eq:rho-xor}
+        \end{equation}
+    \end{frame}
+
+    \begin{frame}{Effect of a Permutation}
+        \begin{lemma}
+            \label{lem:rho-perm}
+            Let \(\alpha, \beta \in \bF_q^n\) and \(v \in \bF_2^n\). Then,
+            \(\rho\) commutes with the S-box layer. Mathematically,
+            \begin{equation}
+                \rho^v\brak{S\brak{\alpha}, S\brak{\beta}} = S\brak{\rho^v\brak{\alpha, \beta}}
+                \label{eq:rho-s-invariant}
+            \end{equation}
+            and thus
+            \begin{equation}
+                S\brak{\alpha} \oplus S\brak{\beta} = S\brak{\rho^v\brak{\alpha, \beta}} \oplus S\brak{\rho^v\brak{\beta, \alpha}}.
+            \end{equation}
+        \end{lemma}
+        \pause
+        \begin{proof}
+            \(S\) operates on each word independently and the result follows
+            immediately from \cref{def:rho-v}.
+        \end{proof}
+    \end{frame}
+
+    \begin{frame}{Effect of a Linear Transformation}
+        \begin{lemma}
+            \label{lem:rho-lin}
+            For a linear transformation \(L\brak{x} = L\brak{x_0, x_1, \ldots,
+            x_{n - 1}}\) and for any \(v \in \bF_2^n\),
+            \begin{equation}
+                L\brak{\alpha} \oplus L\brak{\beta} = L\brak{\rho^v\brak{\alpha, \beta}} \oplus L\brak{\rho^v\brak{\beta, \alpha}}
+            \end{equation}
+        \end{lemma}
+        \pause
+        \begin{proof}
+            Using \eqref{eq:rho-xor} and the linearity of \(L\), we have
+            \begin{align}
+                L\brak{\alpha} \oplus L\brak{\beta} = L\brak{\alpha \oplus \beta} &= L\brak{\rho^v\brak{\alpha, \beta} \oplus \rho^v\brak{\beta, \alpha}} \\
+                &= L\brak{\rho^v\brak{\alpha, \beta}} \oplus L\brak{\rho^v\brak{\beta, \alpha}}
+            \end{align}
+        \end{proof}
+    \end{frame}
+
+    \begin{frame}{Combined Effect}
+        \begin{enumerate}
+            \item<1-> Using \cref{lem:rho-perm} and \cref{lem:rho-lin}, we have
+            \begin{equation}
+                L\brak{S\brak{\alpha}} \oplus L\brak{S\brak{\beta}} = L\brak{S\brak{\rho^v\brak{\alpha, \beta}}} \oplus L\brak{S\brak{\rho^v\brak{\beta, \alpha}}},
+                \label{eq:l-comp-s}
+            \end{equation}
+            \item<2-> Switching \(S\) and \(L\) does not guarantee equality in
+            \eqref{eq:l-comp-s}.
+            \item<3-> Zero difference pattern does not change when \(L\) or
+            \(S\) is applied to any pair \(\alpha^\prime = \rho^v\brak{\alpha,
+            \beta}\) and \(\beta^\prime = \rho^v\brak{\beta, \alpha}\). Thus,
+            \begin{equation}
+                \nu\brak{S\brak{L\brak{\alpha}} \oplus S\brak{L\brak{\beta}}} = \nu\brak{S\brak{L\brak{\rho^v\brak{\alpha, \beta}}} \oplus S\brak{L\brak{\rho^v\brak{\beta, \alpha}}}}.
+                \label{eq:nu-s-comp-l}
+            \end{equation}
+            \item<4-> Although equality may not hold, differences are zero in
+            exactly the same positions when \(S \circ L\) is applied.
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Summary Theorem}
+        \begin{theorem}
+            \label{thm:yoyo}
+            Let \(\alpha, \beta \in \bF_q^n\) and \(\alpha^\prime =
+            \rho^v\brak{\alpha, \beta}, \beta^\prime = \rho^v\brak{\beta,
+            \alpha}\). Then,
+            \begin{equation}
+                \nu\brak{S \circ L \circ S\brak{\alpha} \oplus S \circ L \circ S\brak{\beta}} = \nu\brak{S \circ L \circ S\brak{\alpha^\prime} \oplus S \circ L \circ S\brak{\beta^\prime}}.
+                \label{eq:yoyo}
+            \end{equation}
+        \end{theorem}
+        \pause
+        \begin{proof}
+            The proof follows from the following observations.
+            \begin{enumerate}
+                \item \cref{lem:rho-perm} gives \(S\brak{\alpha} \oplus
+                S\brak{\beta} = S\brak{\alpha^\prime} \oplus
+                S\brak{\beta^\prime}\).
+                \item The linearity of \(L\) gives \(L\brak{S\brak{\alpha}}
+                \oplus L\brak{S\brak{\beta}} = L\brak{S\brak{\alpha^\prime}}
+                \oplus L\brak{S\brak{\beta^\prime}}\).
+                \item Finally, \cref{lem:zero-diff-perm} gives \eqref{eq:yoyo}.
+            \end{enumerate} 
+        \end{proof}
+    \end{frame}
+
+    \subsection{Analysis of Two Generic SP-Rounds}
+    \label{subsec:yoyo-2-rounds}
+
+    \begin{frame}{Analysis of Two Generic SP-Rounds}
+        \begin{enumerate}
+            \item<1-> Two generic SP rounds can be represented as \(G_2^\prime =
+            L \circ S \circ L \circ S\).
+            \item<2-> The last linear layer can be removed to represent it as
+            \(G_2 = S \circ L \circ S\). 
+            \item<3-> Fix a pair of plaintexts \(p^0, p^1\) with a paritcular
+            zero difference pattern \(\nu\brak{p^0 \oplus p^1}\). 
+            \item<4-> From the corresponding ciphertexts \(c^0, c^1\), construct
+            another pair of new ciphertexts \(c^{\prime 0}, c^{\prime 1}\) such
+            that their decrypted plaintexts \(p^{\prime 0}, p^{\prime 1}\) also
+            have the same zero difference pattern. This follows directly from
+            \cref{thm:yoyo} and holds with probability 1.
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Summary Theorem}
+        \begin{theorem}[Generic Yoyo Game for Two SP-Rounds]
+            \label{thm:yoyo-2-rounds}
+            Let \(p^0 \oplus p^1 \in \bF_q^n\), \(c^0 = G_2\brak{p^0}\) and
+            \(c^1 = G_2\brak{p^1}\). Then for any \(v \in bF_2^n\), let
+            \(c^{\prime 0} = \rho^v\brak{c^0, c^1}\) and \(c^{\prime 1} =
+            \rho^v\brak{c^1, c^0}\). Then,
+            \begin{equation}
+                \nu\brak{G_2^{-1}\brak{c^{\prime 0}} \oplus G_2^{-1}\brak{c^{\prime 1}}} = \nu\brak{p^{\prime 0} \oplus p^{\prime 1}} = \nu\brak{p^0 \oplus p^1}.
+                \label{eq:yoyo-2-rounds}
+            \end{equation}
+        \end{theorem}
+        \pause
+        \begin{proof}
+            Since \(S^{-1}\) is also a permutation and \(L^{-1}\) is a linear
+            transformation, we invoke \cref{thm:yoyo} on \(G_2^{-1} = S^{-1}
+            \circ L^{-1} \circ S^{-1}\) to obtain \eqref{eq:yoyo-2-rounds}.
+        \end{proof}
+    \end{frame}
+
+    \begin{frame}{Distiguisher for Two SP-Rounds}
+        \begin{enumerate}
+            \item<1-> \cref{thm:yoyo-2-rounds} gives us a straightforward
+            distinguisher for two generic SP-rounds requiring two plaintexts and
+            two adaptively chosen ciphertexts. 
+            \item<2-> A random permutation would not give back a pair of
+            decrypted plaintexts that still have the same zero difference
+            pattern with very high probability. 
+            \item<3-> One can also generate two ciphertexts and then observe the
+            ciphertexts of the adaptively chosen plaintexts.
+        \end{enumerate}
+    \end{frame}
+
+    \subsection{Analysis of Three Generic SP-Rounds}
+    \label{subsec:yoyo-3-rounds}
+
+    \begin{frame}{Analysis of Three Generic SP-Rounds}
+        \begin{enumerate}
+            \item<1-> As before, three SP rounds can be modeled as \(G_3 = S
+            \circ L \circ S \circ L \circ S\). 
+            \item<2-> For two states \(\alpha\) and \(\beta\), using
+            \cref{thm:yoyo-2-rounds}, it follows that
+            \begin{equation}
+                \nu\brak{G_2^{-1}\brak{\rho^v\brak{G_2\brak{\alpha}, G_2\brak{\beta}}} \oplus G_2^{-1}\brak{\rho^v\brak{G_2\brak{\beta}, G_2\brak{\alpha}}}} = \nu\brak{\alpha \oplus \beta}.
+            \end{equation}
+            \item<3-> Since \(G_2\) and \(G_2^{-1}\) have identical forms, we
+            have
+            \begin{equation}
+                \nu\brak{G_2\brak{\rho^v\brak{G_2^{-1}\brak{\alpha}, G_2^{-1}\brak{\beta}}} \oplus G_2\brak{\rho^v\brak{G_2^{-1}\brak{\beta}, G_2^{-1}\brak{\alpha}}}} = \nu\brak{\alpha \oplus \beta}.
+            \end{equation}
+            \item<4-> Finally, from \cref{lem:rho-perm}, zero difference
+            patterns are preserved through an S-box layer.
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Summary Theorem}
+        \begin{theorem}[Generic Yoyo Game for Three SP-Rounds]
+            \label{thm:yoyo-3-rounds}
+            \only<1>{Let \(G_3 = S \circ L \circ S \circ L \circ S\). If \(p^0, p^1 \in
+            \bF_q^n\) and \(c^0 = G_3\brak{p^0}\), \(c^1 = G_3\brak{p^1}\), then
+            \begin{multline}
+                \nu\brak{G_2\brak{\rho^{v_1}\brak{p^0, p^1}} \oplus G_2\brak{\rho^{v_1}\brak{p^1, p^0}}} \\
+                = \nu\brak{G_2^{-1}\brak{\rho^{v_2}\brak{c^0, c^1}} \oplus G_2^{-1}\brak{\rho^{v_2}\brak{c^1, c^0}}}
+            \end{multline}
+            for any \(v_1, v_2 \in \bF_2^n\).} 
+            \only<2>{Moreover, for any \(z \in \bF_2^n\), define
+            \begin{align}
+                R_P\brak{z} &\triangleq \cbrak{\brak{p^0, p^1} \mid \nu\brak{G_2\brak{p^0} \oplus G_2\brak{p^1}} = z} \\
+                R_C\brak{z} &\triangleq \cbrak{\brak{c^0, c^1} \mid \nu\brak{G_2^{-1}\brak{c^0} \oplus G_2^{-1}\brak{c^1}} = z}
+            \end{align}
+            Then, for any \(\brak{p^0, p^1} \in R_P\brak{z}\),
+            \begin{equation}
+                \brak{G_3\brak{\rho^v\brak{p^0, p^1}}, G_3\brak{\rho^v\brak{p^1, p^0}}} \in R_C\brak{z},
+            \end{equation}
+            and for any \(\brak{c^0, c^1} \in R_C\brak{z}\),
+            \begin{equation}
+                \brak{G_3^{-1}\brak{\rho^v\brak{c^0, c^1}}, G_3^{-1}\brak{\rho^v\brak{c^1, c^0}}} \in R_C\brak{z}.
+            \end{equation}}
+        \end{theorem}
+    \end{frame}
+    
+    \begin{frame}{Distinguisher for Three Generic SP-Rounds}
+        \begin{enumerate}
+            \item<1-> Given a pair in \(R_P\brak{z}\), we can get new pairs that
+            belong to \(R_P\brak{z}\) and \(R_C\brak{z}\) with probability 1. 
+            \item<2-> The key idea behind a distinguisher for three SP-rounds is
+            to get a pair with a particular Hamming weight of the zero
+            difference pattern and then detect this occurence. 
+            \item<3-> The probability that a random pair of plaintexts has a sum
+            with nonzero difference pattern containing exactly \(m\) zeros is
+            \(\binom{n}{m}\frac{\brak{q-1}^m}{q^n}\) where \(q = 2^k\). 
+            \item<4-> Thus, we need to test approximately the inverse of that
+            number of pairs to find one correct pair.
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Distinguisher for Three Generic SP-Rounds}
+        \begin{enumerate}
+            \item<1-> Detecting a correct pair is more involved. Suppose
+            \(\brak{p_1, p_2} \in R_P\brak{z}\) and let the respective
+            ciphertexts be \(\brak{c_1, c_2}\). Let \(A\) be the affine layer in
+            an SASAS construction. 
+            \item<2-> Assume that \(S^{-1}\brak{c^0} = x \oplus z\) and
+            \(S^{-1}\brak{c^1} = y \oplus z\), where \(A^{-1}\brak{x},
+            A^{-1}\brak{y}\) and \(A^{-1}\brak{z}\) are non-zero only in the
+            positions where \(z\) is zero. 
+            \item<3-> It follows that \(x\) and \(y\) belong to a linear
+            subspace \(U\) of dimension \(n - m\) while \(z\) belongs to the
+            complementary linear subspace \(V\) of dimension \(m\) such that \(U
+            \oplus V = \bF_q^n\). 
+            \item<4-> We need to investigate whether \(c^0 \oplus c^1 = S\brak{x
+            \oplus z} \oplus S\brak{y \oplus z}\) has some distinguishing
+            properties.
+        \end{enumerate}
+    \end{frame}
+
+    \section{Applications to AES}
+    \label{sec:aes}
+
+    \subsection{Preliminaries}
+    \label{subsec:aes-prelims}
+
+    \begin{frame}{Round Function of AES}
+        \begin{enumerate}
+            \item<1-> The round function in AES is represented as operations
+            over \(\bF_q^{4 \times 4}\) where \(q = 2^8\). One round of AES can
+            be written as \(R = AK \circ MC \circ SR \circ SB\). 
+            \item<2-> Since differences are used, strip \(AK\) operations.
+            \(SR\) and \(SB\) commute.
+            \item<3-> Two rounds of AES can be written as
+            \begin{equation}
+                R^{2\prime} = MC \circ SR \circ \brak{SB \circ MC \circ SB} \circ SR
+                \label{eq:aes-2-rounds}
+            \end{equation}
+            where \(S = SB \circ MC \circ SB\) can be thought of as four
+            parallel 32-bit super S-boxes. 
+            \item<4-> The initial \(SR\) has no effect, thus \(R^2 = MC \circ SR
+            \circ S\).
+        \end{enumerate}
+    \end{frame}
+    
+    \begin{frame}{Representing AES as Generic SP-rounds}
+        \begin{enumerate}
+            \item<1-> Considering \(S = SB \circ MC \circ SB\) and \(L = SR
+            \circ MC \circ SR\), four rounds of AES can be represented using
+            \eqref{eq:aes-2-rounds} as \(R^{4\prime} = MC \circ SR \circ S \circ
+            L \circ S \circ SR\) which ends up becoming \(R^4 = S \circ L \circ
+            S\).
+            \item<2-> This also shows that a lower bound on the number of active
+            S boxes over four rounds is 25.
+            \only<3->{
+            \begin{itemize}
+                \item 5 active super S-boxes due to the linear layer.
+                \item At least 5 active S boxes inside a super S-box due to
+                MixColumns. 
+            \end{itemize}}
+            \item<4-> Similarly, six rounds of AES can be written as
+            \begin{equation}
+                R^6 = S \circ L \circ S \circ L \circ S.
+            \end{equation}
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Definitions of \(Q, Q^\prime\)}
+        For convenience, we introduce the following definition.
+        \begin{definition}
+            \label{def:q}
+            Let \(Q \triangleq SB \circ MC \circ SR\) and \(Q^\prime \triangleq
+            SR \circ MC \circ SB\).
+        \end{definition}
+        \begin{enumerate}
+            \item<2-> Since two rounds of AES correspond to one generic SPN
+            round, we exploit the properties of one AES round to create
+            distinguishers for an odd number of rounds. 
+            \item<3-> Adding another round at the end of
+            \eqref{eq:aes-2-rounds}, three rounds of AES can be written as \(Q
+            \circ S\).
+            \item<4-> Similarly, five rounds of AES can be written as \(S \circ
+            L \circ S \circ Q^\prime\).
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Properties of \(Q, Q^\prime\)}
+        \begin{enumerate}
+            \item<1-> For a binary vector \(z \in \bF_4^2\) of weight \(t\), let
+            \(V_z\) denote the subspace of \(q^{4\cdot\brak{4 - t}}\) states \(x
+            = \brak{x_0, x_1, x_2, x_3}\) where \(x_i \in \bF_q^4\) if \(z_i =
+            0\) or \(x_i = 0\) otherwise. 
+            \item<2-> For any state \(a = \brak{a_0, a_1, a_2, a_3}\), let
+            \begin{equation}
+                T_{z, a} \triangleq \cbrak{Q\brak{a \oplus x} \mid x \in V_z}.
+                \label{eq:tza-def}
+            \end{equation}
+            \item<3-> Note that \(T_{z, a}\) depends on keyed functions. Let
+            \(H_i\) denote the image of the \(i\)-th word in \(SR\brak{a \oplus
+            x}\) for \(x \in V_z\). Notice that \(\abs{H_i} = q^{4 - t}\). 
+            \item<4-> Define
+            \begin{equation}
+                T_i^{z, a} \triangleq SB \circ MC\brak{H_i}.
+                \label{eq:tiza-def}
+            \end{equation}
+            Since \(SB\) and \(MC\) operate on each word individually, we obtain
+            the following.
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Properties of \(Q, Q^\prime\)}
+        \begin{lemma}
+            \label{lem:tz-rel}
+            The set \(T_{z, a}\) satisfies
+            \begin{equation}
+                T_{z, a} = T_0^{z, a} \times T_1^{z, a} \times T_2^{z, a} \times T_3^{z, a}
+                \label{eq:tz-rel}
+            \end{equation}
+            where \(\abs{T_i^{z, a}} = q^{4 - hw\brak{z}}\), with \(hw\brak{z}\)
+            denoting the Hamming weight of \(z\).
+        \end{lemma}
+        \pause
+        \begin{proof}
+            Each word of \(Q\brak{a \oplus x}\) contributes one byte to each
+            word after \(SR\). If \(4 - t\) words are nonzero, it follows that
+            each word after \(SR\) can take exactly \(q^{4 - t}\) values. Thus,
+            \(T_i^{z, a} = SB \circ MC\brak{H_i}\).
+        \end{proof}
+        \pause
+        A similar property can be derived for \(Q^\prime\) and its inverse as
+        well.
+    \end{frame}
+
+    \begin{frame}{The SimpleSWAP Algorithm}
+        \cref{alg:simple-swap} is a primitive used to perform the yoyo itself.
+        \begin{algorithm}[H]
+            \caption{Swaps the first word where texts are different and returns one word.}
+            \label{alg:simple-swap}
+            \begin{algorithmic}[1]
+                \Function{SimpleSWAP}{\(x^0\), \(x^1\)} \Comment{\(x^0 \ne x^1\)}
+                    \State \(x^{\prime 0} \gets x^{\prime 1}\)
+                    \For{\(i\) from 0 to 3}
+                        \If{\(x_i^0 \ne x_i^1\)}
+                            \State \(x_i^{\prime 0} \gets x_i^{\prime 1}\)
+                            \State \Return \(x^{\prime 0}\)
+                        \EndIf
+                    \EndFor
+                \EndFunction
+            \end{algorithmic}
+        \end{algorithm}
+    \end{frame}
+
+    \subsection{Yoyo Distiguisher for Three Rounds of AES}
+    \label{subsec:aes-3-rounds}
+
+    \begin{frame}{Distinguisher for Three Rounds of AES}
+        \begin{enumerate}
+            \item<1-> Consider plaintexts \(p^0, p^1\) such that \(z =
+            \nu\brak{p^0 \oplus p^1}\) and \(t = hw\brak{z}\). 
+            \item<2-> Using \cref{lem:zero-diff-perm}, we see that
+            \(\nu\brak{S\brak{p^0} \oplus S\brak{p^1}} = \nu\brak{p^0 \oplus
+            p^1}\). 
+            \item<3-> From \cref{lem:tz-rel}, \(Q\brak{S\brak{p^0}} = c^0\) and
+            \(Q\brak{S\brak{p^1}} = c^1\) also belong to \(T_{z, a}\). Further,
+            each word is drawn from the subsets \(T_i^{z, a}\). 
+            \item<4-> In paritcular,
+            \begin{equation}
+                T_{z, a}^\prime = \cbrak{c_0^0, c_0^1} \times \cbrak{c_1^0, c_1^1} \times \cbrak{c_2^0, c_2^1} \times \times \cbrak{c_3^0, c_3^1} \subset T_{z, a}.
+            \end{equation}
+            where the size of \(T_{z, a}^\prime\) is at most \(2^4\) and \(\cbrak{c_i^0,
+            c_i^1} \subset T_i^{z, a}\). 
+            \item<5-> Any other \(c^\prime \ne c^0, c^1 \in T_{z, a}^\prime\)
+            satisfies \(\nu\brak{Q^{-1}\brak{c^\prime} \oplus S\brak{p^0}} =
+            \nu\brak{Q^{-1}\brak{c^\prime} \oplus S\brak{p^1}} =
+            \nu\brak{S\brak{p^0} \oplus S\brak{p^1}}\). 
+            \item<6-> In particular, \(\nu\brak{R^{-3}\brak{c^\prime} \oplus
+            p^0} = \nu\brak{R^{-3}\brak{c^\prime} \oplus p^1} = \nu\brak{p^0
+            \oplus p^1}\). 
+            \item<7-> With a random permutation, the chosen ciphertext
+            \(c^\prime\) would satisfy this condition with probability
+            \(2^{-96}\).
+        \end{enumerate}        
+    \end{frame}
+
+    \begin{frame}{Distinguisher for Three Rounds of AES}
+        \begin{algorithm}[H]
+            \caption{Distinguisher for Three Rounds of AES}
+            \label{alg:aes-3-rounds}
+            \begin{algorithmic}[1]
+                \Require{Plaintexts \(p^0, p^1\) with \(hw\brak{\nu\brak{p^0 \oplus
+                p^1}} = 3\)}
+                \Ensure{1 for AES, -1 otherwise}
+                \State \(c^0 \gets enc_k\brak{p^0, 3}\), \(c^1 \gets enc_k\brak{p^1,
+                3}\)
+                \State \(c^\prime \gets \textsc{SimpleSWAP}\brak{c^0, c^1}\)
+                \State \(p^\prime \gets dec_k\brak{c^\prime, 3}\)
+                \If{\(\nu\brak{p^0 \oplus p^1} = \nu\brak{p^\prime \oplus p^1}\)}
+                    \State \Return 1
+                \Else
+                    \State \Return -1
+                \EndIf
+            \end{algorithmic}
+        \end{algorithm}
+        \textbf{Data complexity:} two plaintexts and one adaptively chosen
+        ciphertext.
+    \end{frame}
+
+    \subsection{Yoyo Distinguisher for Four Rounds of AES}
+    \label{subsec:aes-4-rounds}
+
+    \begin{frame}{Distinguisher for Four Rounds of AES}
+    \begin{enumerate}
+        \item<1-> Four rounds of AES can be represented as \(R^4 = S \circ L
+        \circ S\) after simplification. 
+        \item<2-> \cref{thm:yoyo-2-rounds} is invoked to create the
+        distinguisher.
+        \item<3-> Again, the new ciphertexts are created by simply exchanging
+        words between the two obtined ciphertexts, as shown in
+        \cref{alg:aes-4-rounds}.
+    \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Distinguisher for Four Rounds of AES}
+        \begin{algorithm}[H]
+            \caption{Distinguisher for Four Rounds of AES}
+            \label{alg:aes-4-rounds}
+            \begin{algorithmic}[1]
+                \Require{Plaintexts \(p^0, p^1\) with \(hw\brak{\nu\brak{p^0 \oplus
+                p^1}} = 3\)}
+                \Ensure{1 for AES, -1 otherwise}
+                \State \(c^0 \gets enc_k\brak{p^0, 4}\), \(c^1 \gets enc_k\brak{p^1,
+                4}\)
+                \State \(c^{\prime 0} \gets \textsc{SimpleSWAP}\brak{c^0, c^1}\),
+                \(c^{\prime 1} \gets \textsc{SimpleSWAP}\brak{c^1, c^0}\)
+                \State \(p^{\prime 0} \gets dec_k\brak{c^{\prime 0}, 4}\), \(p^{\prime
+                1} \gets dec_k\brak{c^{\prime 1}, 4}\)
+                \If{\(\nu\brak{p^0 \oplus p^1} = \nu\brak{p^{\prime 0} \oplus p^{\prime
+                1}}\)}
+                    \State \Return 1
+                \Else
+                    \State \Return -1
+                \EndIf
+            \end{algorithmic}
+        \end{algorithm}
+        \textbf{Data complexity:} two plaintexts and two adaptively chosen
+        ciphertexts.
+    \end{frame}
+
+    \subsection{Yoyo Distinguisher for Four Rounds of AES}
+    \label{subsec:aes-5-rounds}
+
+    \begin{frame}{Distiguisher for Five Rounds of AES}
+        \begin{enumerate}
+            \item<1-> If the difference between two plaintexts after
+            \(Q^\prime\) is zero in \(t\) words, we can apply the yoyo game and
+            get new pairs that are zero in exactly the same words after
+            \(Q^\prime\) and reside in the same sets by \cref{lem:tz-rel}.
+            \item<2-> In paritcular, if a pair of plaintexts \(p^0, p^1\) are
+            encrypted through \(Q^\prime\) to a pair of intermediate states with
+            zero difference in 3 out of 4 words, then they have probability
+            \(q^{-1}\) of having the same value in a particular word, since
+            \(\abs{T_i^{z, a}} = q^{4 - 3} = q\) by \cref{lem:tz-rel}.
+            \item<3-> A property of the MixColumns matrix can be exploited to
+            get a tighter bound, which is stated below.
+        \end{enumerate}
+        \only<4->{
+        \begin{lemma}
+            \label<1->{lem:mc-active}
+            Let \(M\) denote a \(4 \times 4\) MixColumns matrix and \(x \in
+            \bF_q^4\). If \(t\) bytes in \(x\) are zero, then \(x \cdot M\) or
+            \(x \cdot M^{-1}\) cannot contain \(4 - t\) or more zeros.
+        \end{lemma}}
+    \end{frame}
+
+    \begin{frame}{Summary Theorem}
+        \begin{theorem}
+            \label{thm:q-weight}
+            Let \(a\) and \(b\) denote two states where
+            \(\nu\brak{Q^\prime\brak{a} \oplus Q^\prime\brak{b}}\) has weight
+            \(t\). Then, the probability that any \(4 - t\) bytes are
+            simultaneously zero in a word in the difference \(a \oplus b\) is
+            \(q^{t - 4}\). When this happens, all bytes in the difference are
+            zero.
+        \end{theorem}
+        \pause        
+        \begin{proof}
+            From \cref{lem:tz-rel}, words in same positions are drawn from
+            \(T_i^{z, a}\) with size \(q^{4 - t}\), thus they are equal with
+            probability \(q^{t - 4}\). Since \(t\) words are zero in
+            \(Q^\prime\brak{a} \oplus Q^\prime\brak{b}\), each word of
+            \(SR^{-1}\brak{Q^\prime\brak{a}} \oplus
+            SR^{-1}\brak{Q^\prime\brak{b}}\) has \(t\) zero bytes. From
+            \cref{lem:mc-active}, \(4 - t\) bytes cannot be zero in each word
+            after \(MC^{-1}\). This is preserved through \(SB^{-1}\) and XOR
+            with the round key.
+        \end{proof}
+    \end{frame}
+
+    \begin{frame}{Distinguisher for Five Rounds of AES}
+        \begin{enumerate}
+            \item<1-> To build the distinguisher, we need to create enough
+            plaintext pairs so that there will be exactly \(t\) zeros after the
+            application of \(Q^\prime\). 
+            \item<2-> Notice that two equal columns remain equal on applying
+            \(MC \circ SB\). 
+            \item<3-> The adversary chooses pairs \(\brak{p^0, p^1}\) which are
+            nonzero in exactly one word and tries enough pairs until the
+            corresponding active word after applying \(MC \circ SB\) on that
+            word has \(t\) zero bytes. 
+            \item<4-> This would imply \(Q^\prime\brak{p^0} \oplus
+            Q^\prime\brak{p^1}\) has \(t\) zero words. 
+            \item<5-> Playing the yoyo game on \(R^4\) will return at most 7 new
+            plaintext pairs which have the same zero difference pattern after
+            one round and obey \cref{thm:q-weight}.
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Attack Analysis}
+        \begin{enumerate}
+            \item<1-> The probability that a pair \(\brak{p^0, p^1}\) with a
+            zero difference pattern of weight 3 has a zero difference pattern of
+            weight \(t\) when encrypted through \(Q^\prime\) is (where \(q =
+            2^8\))
+            \begin{equation}
+                p_b\brak{t} = \binom{4}{t}q^{-t}.
+            \end{equation}
+            \item<2-> We require \(p_b\brak{t}^{-1}\) pairs to get one such
+            pair. To distinguish it, notice that for a random pair of
+            plaintexts, the probability that \(4 - t\) bytes are zero
+            simultaneously in any of the 4 words is approximately
+            \begin{equation}
+                4p_b\brak{4 - t} = 4 \cdot \binom{4}{t} \cdot q^{t - 4}
+            \end{equation}
+            while for a correct pair it is \(4 \cdot q^{t - 4}\). 
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}{Data Complexity}
+        \begin{enumerate}
+            \item<1-> Each pair of plaintexts requires \(\frac{p_b\brak{4 -
+            t}^{-1}}{4}\) plaintext pairs using the yoyo game. 
+            \item<2-> The total data complexity is
+            \begin{equation}
+                2 \cdot \brak{p_b\brak{t}^{-1} \cdot \brak{4 \cdot p_b\brak{4 - t}}^{-1}} = \frac{p_b\brak{t} \cdot p_b\brak{4 - t}^{-1}}{2}.
+            \end{equation}
+            \item<3-> For \(t = 2\), the data complexity is minimum at
+            approximately \(2^{25.8}\). The overall distinguisher is shown in
+            \cref{alg:aes-5-rounds}.
+        \end{enumerate} 
+    \end{frame}
+
+    \begin{frame}[allowframebreaks]{Distinguisher for Five Rounds of AES}
+        % \begin{algorithm}[H]
+        %     \caption{Distinguisher for Five Rounds of AES}
+            \label{alg:aes-5-rounds}
+            \begin{algorithmic}[1]
+                \Ensure{1 for AES, -1 otherwise}
+                \State \(cnt1 \gets 0\).
+                \While {\(cnt1 < 2^{13.4}\)}
+                    \State \(cnt1 \gets cnt1 + 1\).
+                    \State \(p^0, p^1 \gets\) generate random pair with
+                    \(hw\brak{\nu\brak{p^0 \oplus p^1}} = 3\).
+                    \State \(cnt2 \gets 0\), \(WrongPair \gets False\).
+                    \While {\(cnt2 < 2^{11.4}\ \&\ WrongPair = False\)}
+                        \State \(cnt2 \gets cnt2 + 1\).
+                        \State \(c^0 \gets enc_k\brak{p^0, 5}\), \(c^1 \gets
+                        enc_k\brak{p^1, 5}\).
+                        \State \(c^{\prime 0} \gets \textsc{SimpleSWAP}\brak{c^0,
+                        c^1}\), \(c^{\prime 1} \gets \textsc{SimpleSWAP}\brak{c^1,
+                        c^0}\).
+                        \State \(p^{\prime 0} \gets dec_k\brak{c^{\prime 0}, 5}\),
+                        \(p^{\prime 1} \gets dec_k\brak{c^{\prime 1}, 5}\).
+                        \For{\(i\) from 0 to 3}
+                            \If{\(hw\brak{\nu\brak{p_i}} \ge 2\)}
+                                \State \(WrongPair = True\)
+                            \EndIf
+                        \EndFor
+                        \State \(p^{\prime 0} \gets \textsc{SimpleSWAP}\brak{p^0,
+                        p^1}\), \(p^{\prime 1} \gets \textsc{SimpleSWAP}\brak{p^1,
+                        p^0}\).
+                    \EndWhile
+                    \If{\(WrongPair = False\)}
+                        \State \Return 1 \Comment{Did not find difference with two or
+                        more zeros.}
+                    \EndIf
+                \EndWhile
+                \State \Return -1
+            \end{algorithmic}
+        % \end{algorithm}
+    \end{frame}
+
+
+    \subsection{A Five Round Key Recovery Yoyo on AES}
+    \label{subsec:aes-5-rounds-key}
+
+    \begin{frame}[<+->]{Five Round Key Recovery Yoyo on AES}
+        \begin{enumerate}
+            \item Want to find the first round key \(k_0\) XORed in front of
+            \(R^5\). 
+            \item The MixColumns matrix \(M\) in AES is given by (for some
+            constant \(\alpha \in \bF_{2^8}\))
+            \begin{equation}
+                M = \myvec{
+                    \alpha & \alpha \oplus 1 & 1 & 1 \\
+                    1 & \alpha & \alpha \oplus 1 & 1 \\
+                    1 & 1 & \alpha & \alpha \oplus 1 \\
+                    \alpha \oplus 1 & 1 & 1 & \alpha
+                }.
+            \end{equation}
+            \item Pick two plaintexts \(p^0\) and \(p^1\) where the first
+            words are given by \(p_0^0 = \brak{0, i, 0, 0}\) and \(p_0^1 =
+            \brak{z, z \oplus i, 0, 0}\) where \(z \in \bF_q \setminus
+            \cbrak{0}\) and the three other words are equal. Let \(k_0 =
+            \brak{k_{0, 0}, k_{0, 1}, k_{0, 2}, k_{0, 3}}\) denote key bytes
+            XORed with the first word of the plaintext. 
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}[<+->]{Five Round Key Recovery Yoyo on AES}
+        \begin{enumerate}
+            \item The difference between the first words after partial
+            encryption of the two plaintexts \(MC \circ SB \circ AK\) becomes
+            \begin{align}
+                \alpha b_0 \oplus \brak{\alpha \oplus 1}b_1 &= y_0 \\
+                b_0 \oplus \alpha b_1 &= y_1 \\
+                b_0 \oplus b_1 &= y_2 \label{eq:y2} \\
+                \brak{\alpha \oplus 1}b_0 \oplus b_1 &= y_3
+            \end{align}
+            where \(b_0 = s\brak{k_{0, 0}} \oplus s\brak{z \oplus k_{0, 0}}\)
+            and \(b_1 = s\brak{k_{0, 1} \oplus i} \oplus s\brak{k_{0, 1} \oplus
+            z \oplus i}\). 
+            \item \eqref{eq:y2} can be written as
+            \begin{equation}
+                s\brak{k_{0, 0}} \oplus s\brak{k_{0, 0} \oplus z} \oplus s\brak{k_{0, 1} \oplus i} \oplus s\brak{k_{0, 1} \oplus z \oplus i} = y_2.
+            \end{equation}
+            \item Note that \(y_2 = 0\) for \(i \in \cbrak{k_{0, 0} \oplus k_{0,
+            1}, k_{0, 0} \oplus k_{0, 1} \oplus z}\). Hence, there will be at
+            least two values of \(i \in \bF_q\) for which \(y_2 = 0\).
+        \end{enumerate}    
+    \end{frame}
+
+    \begin{frame}[<+->]{Five Round Key Recovery Yoyo on AES}
+        \begin{enumerate}\setcounter{enumi}{4}
+            \item Define \(B = M \circ s^4\) to be the action of \(MC \circ SB\)
+            on one column, where \(s^4\) is the concatenation of four S-boxes in
+            parallel.
+            \item Prepare a set \(\cP\) of plaintexts \(p^0\) and \(p^1\) where
+            \(p_0^0 = \brak{0, i, 0, 0}\) and \(p_0^1 = \brak{z, z \oplus i, 0,
+            0}\). Let \(c^0, c^1\) be the respective ciphertexts. 
+            \item Pick 5 new ciphertext pairs \(\brak{c^{\prime 0}, c^{\prime
+            1}} = \brak{\rho^v\brak{c^0, c^1}, \rho^v\brak{c^1, c^0}}\) and let
+            \(p^{\prime 0}, p^{\prime 1}\) be the respective plaintexts. 
+            \item A correct pair will satisfy
+            \begin{equation}
+                B\brak{p_0^{\prime 0} \oplus k_0} \oplus B\brak{p_0^{\prime 1} \oplus k_0} = \brak{z_0, z_1, 0, z_3}.
+                \label{eq:aes-5-rounds-check}
+            \end{equation}
+        \end{enumerate} 
+    \end{frame}
+
+    \begin{frame}[<+->]{Five Round Key Recovery Yoyo on AES}
+        \begin{enumerate}\setcounter{enumi}{8}
+            \item The adversary can now test the remaining \(2^{24}\) candidate
+            keys and find whether the third byte of the first word is zero for
+            all 5 pairs of plaintexts, where \(k_{0, 0} \oplus k_{0, 1} \in
+            \cbrak{i, i \oplus z}\) for known \(i\) and \(z\). 
+            \item This holds for all 5 pairs at random with probability \(2^{-8
+            \cdot 5} = 2^{-40}\). 
+            \item A false positive might occur with probability \(2^{-16}\) when
+            testing \(2^{24}\) keys. This probability can be reduced by testing
+            with additional pairs when the test succeeds on the first five
+            pairs, which is rare.
+        \end{enumerate} 
+    \end{frame}
+
+    \begin{frame}[<+->]{Attack Analysis}
+        \begin{enumerate}
+            \item The total data complexity (plaintexts and ciphertexts) is
+            \begin{equation}
+                D = 2 \cdot 2^8 \cdot 5 \approx 2^{11.32}.
+            \end{equation}
+            \item For the computational complexity, we need to test \(2^{24}\)
+            keys for each set of plaintexts as we only need to set \(k_{0, 1} =
+            k_{0, 0} \oplus i\), since \(k_{0, 0}, i \in \bF_q\). For each key,
+            we will have \(2 \cdot 4\) S-box lookups for 5 pairs to check
+            \eqref{eq:aes-5-rounds-check}, giving a total complexity of \(2^{24}
+            \cdot 2 \cdot 4 \cdot 5 \cdot 2^8 = 2^{37.3}\).
+            \item This cooresponds to approximately\(2^{31}\) 5-rounds of AES
+            (assuming 80 S-box lookups per encryption).
+        \end{enumerate}        
+    \end{frame}
+
+    \begin{frame}[<+->]{Extracting the Full Subkey}
+        \begin{enumerate}
+            \item Since the adversary knows \(k_0\), they can make a pair of
+            words \(a_0^\prime, b_0^\prime \in \bF_q^4\) that differ only in
+            their first byte. 
+            \item The actual plaintext pair is obtained by performing \(AK^{-1}
+            \circ SB^{-1} \circ MC^{-1}\) on it to obtain \(a_0, b_0\), which is
+            used to create plaintexts \(p^0 = \brak{a_0, 0, 0, 0}\) and \(p^1 =
+            \brak{b_0, 0, 0, 0}\). 
+            \item However, this pair is useless in recovering the other subkeys
+            since the last three words are equal. 
+            \item The yoyo can be used from this initial pair to generate pairs
+            \(\brak{p^{\prime 0}, p^{\prime 1}}\) that are with high probability
+            different in the last three words and whose difference after \(SR
+            \circ MC \circ SB \circ AK\) is non-zero only in the first word. 
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}[<+->]{Extracting the Full Subkey}
+        \begin{enumerate}\setcounter{enumi}{5}
+            \item To attack \(k_1\), notice that each of the \(m\) pairs
+            returned by the yoyo satisfy
+            \begin{equation}
+                B\brak{p_1^{\prime 0} \oplus k_1} \oplus B\brak{p_1^{\prime 1} \oplus k_1} = \brak{0, w, 0, 0}
+                \label{eq:aes-round-2-rel}
+            \end{equation}
+            for some \(w \in \bF_q\) and fixed \(k_1\). This is because
+            the \(i\)-th byte of the \(i\)-th word can be nonzero before \(SR\).
+            \item Notice that \eqref{eq:aes-round-2-rel} can be written as
+            \begin{equation}
+                M^{-1}\brak{0, w, 0, 0} = w \cdot M_2^{-1} = s^4\brak{p_1^{\prime 0} \oplus k_1} \oplus s^4\brak{p_1^{\prime 1} \oplus k_1}.
+            \end{equation}
+            where \(M_i^{-1}\) denotes the \(i\)-th column of \(M^{-1}\). 
+            \item This can be used to solve for \(k_1\) on fixing any byte in
+            \(k_1\). At most \(4 \cdot 2^8\) guesses are spent on getting
+            the correct key.
+            \item Similarly, \(k_2\) and \(k_3\) can be found using analogous
+            relationships with columns of \(M^{-1}\).
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}[<+->]{Recovering all Round Subkeys}
+        \begin{enumerate}
+            \item To recover the remaining 3 round subkeys at once, the
+            adversary should test the solutions against 4 plaintext pairs to
+            ensure a comfortable margin against false positives. 
+            \item Since the initial pair is useless, 5 pairs are used to recover
+            the full key.
+        \end{enumerate} 
+    \end{frame}
+
+    \begin{frame}[allowframebreaks]{Key Recovery Algorithm for Five Rounds of AES}
+        \label{alg:aes-5-rounds-key}
+        \begin{algorithmic}[1]
+            \Ensure{Secret key \(k_0\)}
+            \For{\(i\) from 0 to \(2^8 - 1\)}
+                \State \(p^0 \gets 0\), \(p^1 \gets 0\)
+                \State \(p_0^0 \gets \brak{0, i, 0, 0}\), \(p_0^1 \gets \brak{1, 1 
+                \oplus i, 0, 0}\)
+                \State \(\cS \gets \cbrak{\brak{p^0, p^1}}\)
+                \While{\(\abs{\cS} < 5\)}
+                    \State \(c^0 \gets enc_k\brak{p^0, 5}\), \(c^1 \gets 
+                    enc_k\brak{p^1, 5}\)
+                    \State \(c^{\prime 0} \gets \textsc{SimpleSWAP}\brak{c^0,
+                    c^1}\), \(c^{\prime 1} \gets \textsc{SimpleSWAP}\brak{c^1,
+                    c^0}\)
+                    \State \(p^{\prime 0} \gets dec_k\brak{c^{\prime 0}, 5}\),
+                    \(p^{\prime 1} \gets dec_k\brak{c^{\prime 1}, 5}\)
+                    \State \(p^0 \gets \textsc{SimpleSWAP}\brak{p^{\prime 0},
+                    p^{\prime 1}}\), \(p^1 \gets \textsc{SimpleSWAP}\brak{p^{\prime
+                    1}, p^{\prime 0}}\)
+                    \State \(\cS \gets \cS \cup \cbrak{\brak{p^0, p^1}}\)
+                \EndWhile
+                \ForAll{\(2^{24}\) key candidates \(k_0\)}
+                    \ForAll{\(\brak{p^0, p^1} \in \cS\)}
+                        \If{\(l_3\brak{s^4\brak{p_0^0 \oplus k_0} \oplus
+                        s^4\brak{p_0^1 \oplus k_0}} \ne 0\)}
+                            \State Break and jump to next key
+                        \EndIf
+                    \EndFor
+                    \State \Return \(k_0\)
+                \EndFor
+            \EndFor
+        \end{algorithmic}
+    \end{frame}
+\end{document}

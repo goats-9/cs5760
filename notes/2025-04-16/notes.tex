@@ -230,7 +230,7 @@ through an S-box layer. Putting it all together gives us the following theorem.
     Let \(G_3 = S \circ L \circ S \circ L \circ S\). If \(p^0, p^1 \in \bF_q^n\)
     and \(c^0 = G_3\brak{p^0}\), \(c^1 = G_3\brak{p^1}\), then
     \begin{equation}
-        \nu\brak{G_2\brak{\rho^{v_1}\brak{p^0, p^1}} \oplus G_2\brak{\rho^{v_1}\brak{p^1, p^0}}} = \nu\brak{G_2^{1}\brak{\rho^{v_2}\brak{c^0, c^1}} \oplus G_2^{-1}\brak{\rho^{v_2}\brak{c^1, c^0}}}
+        \nu\brak{G_2\brak{\rho^{v_1}\brak{p^0, p^1}} \oplus G_2\brak{\rho^{v_1}\brak{p^1, p^0}}} = \nu\brak{G_2^{-1}\brak{\rho^{v_2}\brak{c^0, c^1}} \oplus G_2^{-1}\brak{\rho^{v_2}\brak{c^1, c^0}}}
     \end{equation}
     for any \(v_1, v_2 \in \bF_2^n\). Moreover, for any \(z \in \bF_2^n\),
     define \(R_P\brak{z} \triangleq \cbrak{\brak{p^0, p^1} \mid
@@ -265,7 +265,7 @@ R_P\brak{z}\) and let the respective ciphertexts be \(\brak{c_1, c_2}\). Let
 the positions where \(z\) is zero. It follows that \(x\) and \(y\) belong to a
 linear subspace \(U\) of dimension \(n - m\) while \(z\) belongs to the
 complementary linear subspace \(V\) of dimension \(m\) such that \(U \oplus V =
-\bF_q^n\). Thus, we need to investiage whether \(c_1 \oplus c_2 = S\brak{x
+\bF_q^n\). Thus, we need to investigate whether \(c_1 \oplus c_2 = S\brak{x
 \oplus z} \oplus S\brak{y \oplus z}\) has some distinguishing properties.
 
 \section{Applications to AES}
