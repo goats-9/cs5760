@@ -367,12 +367,13 @@
         \end{enumerate}
     \end{frame}
 
-    \section{Retracing Boomerang Attack on Five Round AES}
+    \section[Application to Five Round AES]{Retracing Boomerang Attack on Five Round AES}
     \label{sec:retr-boomerang-aes}
 
     \subsection{Brief Description of AES}
     \label{subsec:aes-description}
-    \begin{frame}{Description of AES, Notation}
+
+    \begin{frame}{Description of AES}
         \begin{enumerate}[<+->]
             \item Byte ordering shown after \(SB\) in \cref{fig:aes} (column
             major).
@@ -388,7 +389,7 @@
         \end{enumerate}
         \begin{figure}[!ht]
             \centering
-            \includegraphics[width=0.9 \columnwidth]{images/aes.png}
+            \includegraphics[width=0.85\columnwidth]{images/aes.png}
             \caption{An AES round.}
             \label{fig:aes}
         \end{figure}
@@ -459,43 +460,318 @@
         \end{algorithm}
     \end{frame}
 
-    \begin{frame}{Meet in the Middle Improvement on Yoyo Attack}
-        
+    \begin{frame}[<+->]{Meet in the Middle Improvement on Yoyo Attack}
+        \begin{enumerate}
+            \item Data complexity of \(2^9\) and time complexity of \(2^{40}\).
+            Careful analysis of round 0 can reduce the complexity down to
+            \(2^{31}\).
+            \item Can improve using a meet in the middle (MITM) attack on bytes
+            0, 5, 10 and 15 of \(k_{-1}\).
+            \item Denote the value of byte \(m\) before \(MC\) operation of
+            round 0 by \(W_m\), and WLOG let \(l = 0\). Then,
+            \begin{equation}
+                Z_0 = 02_x \cdot W_0 \oplus 03_x \cdot W_1 \oplus 01_x \cdot W_2 \oplus 01_x \cdot W_3.
+                \label{eq:mitm}
+            \end{equation}
+            \item The adversary guesses bytes 0, 5 of \(k_{-1}\) by computing
+            the following for \(j = 1, 2, 3\) and storing the concatenated
+            24-bit value in a hash table.
+            \begin{equation}
+                02_x \cdot \brak{\brak{W_3^j}_0 \oplus \brak{W_4^j}_0} \oplus 03_x \cdot \brak{\brak{W_3^j}_1 \oplus \brak{W_4^j}_1}
+                \label{eq:mitm-0-5}
+            \end{equation}
+            \seti
+        \end{enumerate} 
     \end{frame}
 
-The yoyo attack has data complexity about \(2^9\) and overall time complexity is
-\(2^{40}\). A careful analysis of round 0 can reduce the complexity down to
-\(2^{31}\) encryptions. However, there is a better improvement that can be made
-using a meet in the middle (MITM) attack on bytes 0, 5, 10 and 15 of \(k_{-1}\).
-Denote the intermediate value of byte \(m\) before the \(MC\) operation of round
-0 during encryption as \(W_m\), and consider WLOG \(l = 0\). Then, the input to
-round 1 satisfies
-\begin{equation}
-    Z_0 = 02_x \cdot W_0 \oplus 03_x \cdot W_1 \oplus 01_x \cdot W_2 \oplus 01_x \cdot W_3.
-    \label{eq:mitm}
-\end{equation} 
-In the MITM attack, the adversary guesses bytes 0, 5 of \(k_{-1}\) by computing
-the values
-\begin{equation}
-    02_x \cdot \brak{\brak{W_3^j}_0 \oplus \brak{W_4^j}_0} \oplus 03_x \cdot \brak{\brak{W_3^j}_1 \oplus \brak{W_4^j}_1}
-    \label{eq:mitm-0-5}
-\end{equation}
-for \(j = 1, 2, 3\), concatenating these values and storing them in a table for
-each guess. Similarly, the adversary guesses the values for bytes 10, 15 of
-\(k_{-1}\) and computes 
-\begin{equation}
-    01_x \cdot \brak{\brak{W_3^j}_2 \oplus \brak{W_4^j}_2} \oplus 01_x \cdot \brak{\brak{W_3^j}_3 \oplus \brak{W_4^j}_3}
-    \label{eq:mitm-10-15}
-\end{equation}
-for \(j = 1, 2, 3\) and checks for a match in the table, which is equivalent to
-the condition \(\brak{Z_3^j}_0 = \brak{Z_4^j}_0\) for \(j = 1, 2, 3\). This
-24-bit filtering leaves \(2^8\) candidates for bytes 0, 5, 10, 15 of \(k_{-1}\).
-These can be checked by using the conditions \(\brak{Z_3^4}_0 = \brak{Z_4^4}_0\)
-and \(\brak{Z_1}_0 = \brak{Z_2}_0\).
+    \begin{frame}[<+->]{Meet in the Middle Improvement on Yoyo Attack}
+        \begin{enumerate}
+            \conti
+            \item Similarly, the adversary does this for bytes 10, 15 of
+            \(k_{-1}\), computing
+            \begin{equation}
+                01_x \cdot \brak{\brak{W_3^j}_2 \oplus \brak{W_4^j}_2} \oplus 01_x \cdot \brak{\brak{W_3^j}_3 \oplus \brak{W_4^j}_3}
+                \label{eq:mitm-10-15}
+            \end{equation}
+            \item The adversary checks for a match in the table, which is
+            equivalent to \(\brak{Z_3^j}_0 = \brak{Z_4^j}_0\) for \(j = 1, 2,
+            3\).
+            \item 24-bit filtering leaves \(2^8\) candidates for bytes 0, 5, 10,
+            15 of \(k_{-1}\), checked using the conditions \(\brak{Z_3^4}_0 =
+            \brak{Z_4^4}_0\) and \(\brak{Z_1}_0 = \brak{Z_2}_0\).
+            \item Although the data complexity looks like \(2^{16}\), the
+            \emph{dissection technique} can be used to maintain the memory at
+            \(2^9\).
+            \item The time complexity is now reduced to \(2^6 \cdot 4 \cdot
+            2^{16} = 2^{24}\) operations, which is roughly equivalent to less
+            than \(2^{23}\) encryptions.
+        \end{enumerate} 
+    \end{frame}
 
-Although the data complexity looks like \(2^{16}\), the \emph{dissection
-technique} can be used to maintain the memory at \(2^9\). The time complexity is
-now reduced to \(2^6 \cdot 4 \cdot 2^{16} = 2^{24}\) operations, which is
-roughly equivalent to less than \(2^{23}\) encryptions.
+    \subsection{Improved Attack on Five Round AES}
+    \label{subsec:improved-mitm}
+
+    \begin{frame}[<+->]{Improving the MITM Attack}
+        \begin{enumerate}
+            \item The MITM attack can be improved to a time complexity of
+            \(2^{16.5}\) at the expense of incereasing the data complexity to
+            \(2^{15}\).
+            \item The main idea is to reduce the number of possible key values
+            to \(2^8\) instead of \(2^{16}\) as described earlier. This is done
+            in multiple steps.
+            \begin{itemize}
+                \item Specific choice of plaintexts based on DDT of AES S-boxes.
+                \item Eliminating key bytes using friend pairs.
+            \end{itemize}
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}[<+->]{Specific Choice of Plaintexts}
+        \begin{enumerate}
+            \item Choose plaintexts with non-zero difference \emph{only in bytes
+            0 and 5.} Here, \(\brak{Z_1}_0 = \brak{Z_2}_0\) leaves \(2^8\)
+            candidates for \(k_{-1, \cbrak{0, 5}}\), given by
+            \begin{equation}
+                02_x \cdot \brak{\brak{W_1}_0 \oplus \brak{W_2}_0} \oplus 03_x \cdot \brak{\brak{W_1}_1 \oplus \brak{W_2}_1} = 0.
+                \label{eq:mitm-simple}
+            \end{equation}
+            \item Constrain \(\brak{P_1}_5 \oplus \brak{P_2}_5 = 01_x\) to
+            detect right key bytes efficiently.
+            \item DDT row of AES S-box for input difference \(01_x\) along with
+            input pair(s) for each output difference computed and stored in
+            memory.
+            \item For each \(\brak{P_1, P_2}\) and for each guess of \(k_{-1,
+            0}\), use \eqref{eq:mitm-simple} to compute the output difference of
+            the SB operation in byte 5.
+            \item We can lookup to find inputs that can lead to this difference
+            and retrieve possible values of \(k_{-1, 5}\) that correspond to the
+            guessed \(k_{-1, 0}\).
+            \item Gives \(2^8\) values of \(k_{-1, \cbrak{0, 5}}\) in about
+            \(2^8\) simple operations per pair.
+        \end{enumerate}        
+    \end{frame}
+
+    \begin{frame}[<+->]{Eliminating Key Bytes Using Friend Pairs}
+        \begin{enumerate}
+            \item To reduce the number of candidates for \(k_{-1, \cbrak{10,
+            15}}\), the boomerang process is used to return multiple friend
+            pairs \(\brak{P_3^j, P_4^j}\).
+            \item In particular, we choose one such pair for which
+            \begin{equation}
+                \brak{P_3^j}_{10} \oplus \brak{P_4^j}_{10} = 0 \quad \textrm{or} \quad \brak{P_3^j}_{15} \oplus \brak{P_4^j}_{15} = 0.
+                \label{eq:mitm-check}
+            \end{equation}
+            Assume WLOG that equality holds in byte 10.
+            \item Then, \eqref{eq:mitm-10-15} depends only on \(k_{-1, 15}\) and
+            has only \(2^8\) possible values.
+            \item Requires \(2^9\) simple operations and leaves \(2^8\)
+            candidates for \(k_{-1, \cbrak{0, 5, 15}}\).
+            \item Similar MITM procedure followed with another friend pair to
+            obtain the unique value of \(k_{-1, \cbrak{0, 5, 10, 15}}\) by
+            isolating \(k_{-1, 10}\).
+            \item Perform \(2^8\) operations for each pair \(\brak{P_1, P_2}\)
+            and for each value of \(l\). Total time complexity of about
+            \(2^{16}\) operations.
+            \item Each pair requires \(2^7\) friend pairs to find one that
+            satisfies \eqref{eq:mitm-check} with high probability. Total data
+            complexity is increased to about \(2^{15}\).
+        \end{enumerate} 
+    \end{frame}
+
+    \begin{frame}[<+->]{Attack Algorithm}
+        \begin{enumerate}
+            \item \textbf{Precomputation:} Compute DDT row of AES S-box for
+            input difference \(01_x\), along with actual inputs for each output
+            difference.
+            \item \textbf{Online Phase:} Take 64 pairs \(\brak{P_1, P_2}\) with
+            \(\brak{P_1}_5 = 00_x\), \(\brak{P_2}_5 = 01_x\), \(\brak{P_1}_0 \ne
+            \brak{P_2}_0\) and all other corresponding bytes equal.
+            \item For each plaintext pair, create \(2^7\) friend pairs
+            \(\brak{P_1^j, P_2^j}\) such that for each \(j\), \(P_1^j \oplus
+            P_2^j = P_1 \oplus P_2\) and \(\brak{P_1^j}_{\cbrak{0, 5, 10, 15}} =
+            \brak{P_1}_{\cbrak{0, 5, 10, 15}}\).
+            \seti
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}[<+->]{Attack Algorithm}
+        \begin{enumerate}
+            \conti
+            \item For each plaintext pair \(\brak{P_1, P_2}\) and for each \(l
+            \in \cbrak{0, 1, 2, 3}\), do the following. (\(l = 0\) taken below)
+            \begin{enumerate}[<+->]
+                \item Use \eqref{eq:mitm-simple} to compute and store all
+                \(2^8\) candidates for \(k_{-1, \cbrak{0, 5}}\) in a table.
+                \item Use the boomerang process to obtain pairs \(\brak{P_3,
+                P_4}\) and \(\brak{P_3^j, P_4^j}\).
+                \item Find a \(j\) for which \eqref{eq:mitm-check} is satisfied.
+                Perform an MITM attack on column 0 of round 0 using
+                \(\brak{P_3^j, P_4^j}\) to obtain \(2^8\) candidates for
+                \(k_{-1, \cbrak{0, 5, 15}}\).
+                \item Perform another MITM attack on column 0 of round 0 using
+                two plaintext pairs \(\brak{P_3^{j^\prime}, P_4^{j^\prime}}\).
+                This gives a possible value for \(k_{-1, \cbrak{0, 5, 10,
+                15}}\).
+                \item If contradiction, go to the next value of \(l\). If
+                contradiction for all \(l\), discard this pair and go to the
+                next pair.
+            \end{enumerate}
+            \item Using a pair \(\brak{P_1, P_2}\) for which no contradiction
+            occurred, perform similar MITM attacks on columns 1, 2 and 3 of
+            round 0 using the fact that \(Z_3 \oplus Z_4\) equals 0 in the
+            \(l\)-th inverse shifted column to recover the entire \(k_{-1}\). 
+        \end{enumerate}
+    \end{frame}
+
+    \begin{frame}[<+->]{Attack Analysis}
+        \begin{enumerate}
+            \item The attack succeeds if the data contains a pair that satisfies
+            the truncated differential characteristic of \(E_0\) and for one of
+            the `friend pairs' of that pair, the corresponding plaintext pair
+            \(\brak{P_3^j, P_4^j}\) has zero difference in either byte 10 or 15.
+            \item Increasing the number of initial pairs and friend pairs per
+            initial pair boosts success probability. With 64 pairs and 128
+            friend pairs per initial pair, the probability of success is
+            \(\brak{1 - e^{-1}}^2 \approx 0.4\)
+            \item Another way to boost succees probability is to find other ways
+            to cancel terms in \eqref{eq:mitm-10-15}. For instance, if there
+            exist \(j, j^\prime\) such that \(\cbrak{\brak{P_3^j}_{10},
+            \brak{P_4^j}_{10}} = \cbrak{\brak{P_3^{j^\prime}}_{10},
+            \brak{P_4^{j^\prime}}_{10}}\), we can take the XOR of
+            \eqref{eq:mitm-10-15} to cancel the effect of \(k_{-1, 10}\), thus
+            increasing the success probability even when there is no pair that
+            satisfies \eqref{eq:mitm-check}.
+            \seti
+        \end{enumerate} 
+    \end{frame}
+
+    \begin{frame}[<+->]{Attack Analysis}
+        \begin{enumerate}
+            \conti
+            \item Data complexity is \(2 \cdot 2^6 \cdot 2^7 = 2^{14}\) chosen
+            plaintexts and \(2^{14}\) adaptively chosen ciphertexts.
+            \item Structures can reduce the data complexity to slightly above
+            \(2^{14}\) adaptively chosen ciphertexts and plaintexts, but also
+            slightly reduces the success probability due to additional
+            dependencies between analyzed pairs.
+            \item Memory complexity of the attack remains at \(2^9\) 128-bit
+            memory cells, like the yoyo attack.
+            \item Time complexity is dominated by several MITM attacks that take
+            \(2^{16}\) operations each. Considering one AES operation to be
+            equivalent to 80 S-box lookups and adding it to the number of
+            queries gives us a total of \(2^{16.5}\) encryptions.
+        \end{enumerate} 
+    \end{frame}
+
+    \section[Secret S-Boxes]{Improved Attack on Five Round AES with a Secret S-box}
+    \label{sec:secret-s-box}
+
+    \begin{frame}[<+->]{Attack on Five Round AES with a Secret S-box}
+        \begin{enumerate}
+            \item Retracing boomerang attack recovers the secret key without
+            fully recovering the secret S-box (the S-box is recovered upto an
+            affine transformation in \(GF\brak{2^8}\)).
+            \item The idea exploit the fact that with probability \(2^{-6}\),
+            the pair \(\brak{Z_3, Z_4}\) has zero difference in an inverse
+            shifted column.
+            \item This observation does not depend on the specific structure of
+            \(MC\) and \(SB\) operations, hence it can be applied to
+            key-dependent variants as well.
+        \end{enumerate}
+    \end{frame}
+
+    \subsection{Partial Recovery of the S-box}
+    \label{subsec:s-box-recovery}
+
+    \begin{frame}[<+->]{Setting up a System of Linear Equations}
+        \begin{enumerate}
+            \item Assume WLOG the retracing boomerang produces zero difference
+            in byte 0 of state \(Z\), or \(\brak{Z_3}_0 \oplus \brak{Z_4}_0 =
+            0\). \eqref{eq:mitm} can be rewritten as
+            \begin{align}
+                0 ={}&\brak{Z_3}_0 \oplus \brak{Z_4}_0 \\
+                \begin{split}
+                    ={}& 02_x \cdot \brak{\brak{W_3}_0 \oplus \brak{W_4}_0} \oplus 03_x \cdot \brak{\brak{W_3}_1 \oplus \brak{W_4}_1} \\
+                    &\oplus 01_x \cdot \brak{\brak{W_3}_2 \oplus \brak{W_4}_2} \oplus 01_x \cdot \brak{\brak{W_3}_3 \oplus \brak{W_4}_3}.
+                \end{split}
+                \label{eq:lin-secret}
+            \end{align}
+            \item Note that \(\brak{W_3}_j = SB\brak{P_3 \oplus k_{-1,
+            j^\prime}}\) for \(j = 0, 1, 2, 3\) where \(j^\prime =
+            SR^{-1}\brak{j}\).
+            \item If we define \(4 \cdot 256 = 1024\) variables \(x_{m,j} =
+            SB\brak{m \oplus k_{-1, j^\prime}}\) for \(m \in \bF_q\) and \(j =
+            0, 1, 2, 3\), then each plaintext pair \(P_1, P_2\) which satisfies
+            \eqref{eq:lin-secret} provides a linear equation in the variables
+            \(x_{m,j}\).
+            \seti
+        \end{enumerate}    
+    \end{frame}
+
+    \begin{frame}[<+->]{Setting up a System of Linear Equations}
+        \begin{enumerate}
+            \conti
+            \item To obtain many pairs, attach about \(2^{10}\) friend pairs to
+            each of the \(2^6\) original pairs \(\brak{P_1, P_2}\).
+            \item For each original pair along with its friend pairs, perform
+            the mixing retracing boomerang process to obtain a linear equation
+            in the variables \(x_{m, j}\). A few more friend pairs are taken for
+            extra filtering of the original pairs.
+            \item Since differences are used \eqref{eq:lin-secret}, we can
+            recover the S-box with an invertible linear transformation over
+            \(GF\brak{2^8}\). That is, we can only obtain functions \(S_0, S_1,
+            S_2, S_3\) such that
+            \begin{equation}
+                S_j\brak{x} = L_0\brak{SB\brak{x \oplus k_{-1, j^\prime}}},
+            \end{equation}
+            for some unknown linear transformation \(L_0\). Similar linear
+            transformations \(L_t\) will be obtained for column \(t\).
+        \end{enumerate}    
+    \end{frame}
+
+    \subsection{Recovering the Secret Key}
+
+    The secret key \(k_{-1}\) can be recovered despite not knowing the S-box in two
+    steps.
+
+    First, for each \(j^\prime\), we can recover \(\bar{k_{j^\prime}} = k_{-1, 0}
+    \oplus k_{-1, {j^\prime}}\) as \(\bar{k_{j^\prime}}\) is the unique value of
+    \(c\) such that \(S_j\brak{x} = S_0\brak{x \oplus c}\) for all \(x\). Similarly,
+    we can recover each inverse shifted column of \(k_{-1}\) up to \(2^8\) possible
+    values. This reduces the total number of candidates for \(k_{-1}\) to
+    \(2^{32}\).
+
+    Second, the differences \(k_{-1, 0} \oplus k_{-1, j}\) for \(j = 1, 2, 3\) can
+    be found by taking several quartets of values \(\brak{x_0, x_1, x_2, x_3}\) such
+    that \(\bigoplus_{i=0}^3S_0\brak{x_i} = 0\). These quartets eliminate the effect
+    of the difference between the linear transformations \(L_0\) and \(L_j\) by
+    finding the unique value of \(c_j\) such that \(\bigoplus_{i=0}^3 S_j\brak{c_j
+    \oplus x} = 0\). Thus, in about \(2^{12}\) operations, we can determine the
+    entire secret key \(k_{-1}\) upto the value of \(k_{-1, 0}\). These \(2^8\)
+    possibilities can be exhaustively searched.
+
+    \subsection{Attack Analysis}
+    The data complexity of this attack is \(2 \cdot 2^6 \cdot 2^{10} = 2^{17}\)
+    chosen plaintexts and \(2^{17}\) adaptively chosen ciphertexts. Using
+    structures, the amount of chosen plaintexts can be reduced to \(2^{14}\), thus
+    the overall data complexity is less than \(2^{17.5}\) chosen plaintexts and
+    adaptively chosen ciphertexts.
+
+    The time complexity is dominated by solving a system of 1034 equations in 1024
+    variables for each of the \(2^6\) pairs \(\brak{P_1, P_2}\). Using an efficient
+    algorithm such as the Method of the Four Russians, each solution takes about
+    \(2^{27}\) simple operations or approximately \(2^{21}\) encryptions. Thus, the
+    overall time complexity is \(2^{29}\).
+
+    The memory complexity is dominated by the memory required for solving the
+    equations, which is about \(2^{17}\) 128-bit blocks.
+
+    \subsection{Improvement Using a Distinguisher Before the Attack}
+
+    The equation solving step has to be applied \(2^8\) times since we do not know
+    if a pair satisfies the boomerang property. To obtain this information in
+    advance, we can use the five-round yoyo distinguisher. In this variant, the time
+    complexity is dominated by the complexity of the yoyo distinguisher, which is
+    \(2^{25.8}\). The memory complexity is still \(2^{17}\).
 
 \end{document}

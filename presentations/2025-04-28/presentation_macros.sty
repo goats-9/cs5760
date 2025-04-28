@@ -29,9 +29,11 @@
 \crefname{algorithm}{Algorithm}{Algorithms}
 \crefname{definition}{Definition}{Definitions}
 
-\newcounter{savedenum}
-\newcommand*{\seti}{\setcounter{savedenum}{\theenumi}}
-\newcommand*{\conti}{\setcounter{enumi}{\thesavedenum}}
+\newcounter{saveenumi}
+\newcommand{\seti}{\setcounter{saveenumi}{\value{enumi}}}
+\newcommand{\conti}{\setcounter{enumi}{\value{saveenumi}}}
+
+\resetcounteronoverlays{saveenumi}
 
 % **** IF YOU WANT TO DEFINE ADDITIONAL MACROS FOR YOURSELF, PUT THEM HERE:
 \DeclareMathOperator*{\argmax}{arg\,max}
