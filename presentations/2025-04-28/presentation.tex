@@ -69,7 +69,7 @@
     \end{frame}
     
     \begin{frame}
-        \tableofcontents
+        \tableofcontents[hideallsubsections]
     \end{frame}
     
     \section{Introduction}
@@ -117,10 +117,11 @@
     \end{frame}
 
     \begin{frame}{The Boomerang Distinguisher}
-        \vspace{-1em}
         \begin{algorithm}[H]
             \caption{The Boomerang Attack Distinguisher}
             \label{alg:boomerang-dist}
+            \algrenewcommand\alglinenumber[1]{\small ####1:}
+            \small
             \begin{algorithmic}[1]
                 \State Initialize a counter \(ctr \gets 0\). 
                 \State Generate \(\brak{pq}^{-2}\) plaintext pairs \(\brak{P_1, P_2}\)
@@ -220,7 +221,7 @@
         \end{enumerate}
     \end{frame}
 
-    \section{The Retracing Boomerang Attack}
+    \section[Retracing Boomerang Attack]{The Retracing Boomerang Attack}
     \label{sec:retr-boomerang}
     
     \subsection{The Retracing Boomerang Framework}
@@ -367,7 +368,7 @@
         \end{enumerate}
     \end{frame}
 
-    \section[Application to Five Round AES]{Retracing Boomerang Attack on Five Round AES}
+    \section[Application to AES]{Retracing Boomerang Attack on Five Round AES}
     \label{sec:retr-boomerang-aes}
 
     \subsection{Brief Description of AES}
@@ -674,11 +675,14 @@
             \item The idea exploit the fact that with probability \(2^{-6}\),
             the pair \(\brak{Z_3, Z_4}\) has zero difference in an inverse
             shifted column.
-            \item This observation does not depend on the specific structure of
-            \(MC\) and \(SB\) operations, hence it can be applied to
-            key-dependent variants as well.
+            \item This does not depend on the specific structure of \(MC\) and
+            \(SB\) operations, hence it can be applied to key-dependent variants
+            as well.
         \end{enumerate}
     \end{frame}
+
+    \subsection{Partial Recovery of the S-box}
+    \label{subsec:s-box-recovery}
 
     \begin{frame}[<+->]{Setting up a System of Linear Equations}
         \begin{enumerate}
@@ -696,11 +700,10 @@
             \item Note that \(\brak{W_3}_j = SB\brak{P_3 \oplus k_{-1,
             j^\prime}}\) for \(j = 0, 1, 2, 3\) where \(j^\prime =
             SR^{-1}\brak{j}\).
-            \item If we define \(4 \cdot 256 = 1024\) variables \(x_{m,j} =
-            SB\brak{m \oplus k_{-1, j^\prime}}\) for \(m \in \bF_q\) and \(j =
-            0, 1, 2, 3\), then each plaintext pair \(P_1, P_2\) which satisfies
-            \eqref{eq:lin-secret} provides a linear equation in the variables
-            \(x_{m,j}\).
+            \item Define \(4 \cdot 256 = 1024\) variables \(x_{m,j} = SB\brak{m
+            \oplus k_{-1, j^\prime}}\) for \(m \in \bF_q\) and \(j = 0, 1, 2,
+            3\). Each plaintext pair \(P_1, P_2\) satisfying
+            \eqref{eq:lin-secret} provides a linear equation in \(x_{m,j}\).
             \seti
         \end{enumerate}    
     \end{frame}
@@ -728,194 +731,128 @@
 
     \begin{frame}[<+->]{Recovering the Secret Key}
         \begin{enumerate}
-            \item First, for each \(j^\prime\), we can recover 
-            \(\bar{k_{j^\prime}} = k_{-1, 0} \oplus k_{-1, {j^\prime}}\) as 
-            \(\bar{k_{j^\prime}}\) is the unique value of \(c\) such that
-            \(S_j\brak{x} = S_0\brak{x \oplus c}\) for all \(x\).
-            \item Similarly, we can recover each inverse shifted column of
-            \(k_{-1}\) up to \(2^8\) possible values, reducing the total number
-            of candidates to \(2^{32}\).
-            \item Second, the differences \(k_{-1, 0} \oplus k_{-1, j}\) for
-            \(j = 1, 2, 3\) can be found by taking quartets \(\brak{x_0, x_1,
-            x_2, x_3}\) such that \(\bigoplus_{i=0}^3S_0\brak{x_i} = 0\).
-            \item Quartets eliminate the effect of the difference between the
-            linear transformations \(L_0\) and \(L_j\) by finding the unique
-            \(c_j\) such that \(\bigoplus_{i=0}^3 S_j\brak{c_j \oplus x} = 0\).
-            \item Thus, in about \(2^{12}\) operations, we can determine the 
-            entire secret key \(k_{-1}\) upto the value of \(k_{-1, 0}\), 
-            giving \(2^8\) possibilities to be exhaustively searched.
+            \item For each \(j^\prime\), recover \(\bar{k_{j^\prime}} = k_{-1,
+            0} \oplus k_{-1, {j^\prime}}\), which is the unique value of \(c\)
+            such that \(S_j\brak{x} = S_0\brak{x \oplus c}\) for all \(x\).
+            \item Similarly, recover each inverse shifted column of \(k_{-1}\)
+            up to \(2^8\) possible values, reducing the total number of
+            candidates to \(2^{32}\).
+            \item The differences \(k_{-1, 0} \oplus k_{-1, j}\) for \(j = 1, 2,
+            3\) can be found by taking several quartets of values \(\brak{x_0,
+            x_1, x_2, x_3}\) such that \(\bigoplus_{i=0}^3S_0\brak{x_i} = 0\).
+            \item Quartets eliminate effect of difference between \(L_0\) and
+            \(L_j\) by finding the unique \(c_j\) such that \(\bigoplus_{i=0}^3
+            S_j\brak{c_j \oplus x} = 0\).
+            \item In about \(2^{12}\) operations, \(k_{-1}\) is determined upto
+            the value of \(k_{-1, 0}\). These \(2^8\) possibilities can be
+            exhaustively searched.
         \end{enumerate}
     \end{frame}
 
     \begin{frame}[<+->]{Attack Analysis}
         \begin{enumerate}
-            \item Data complexity is \(2 \cdot 2^6 \cdot 2^{10} = 2^{17}\)
+            \item Data complexity of \(2 \cdot 2^6 \cdot 2^{10} = 2^{17}\)
             chosen plaintexts and \(2^{17}\) adaptively chosen ciphertexts.
-            \item Using structures, the amount of chosen plaintexts can be
-            reduced to \(2^{14}\), thus the overall data complexity is less
-            than \(2^{17.5}\) chosen plaintexts and adaptively chosen
-            ciphertexts.
-            \item The time complexity is dominated by solving a system
-            of 1034 equations in 1024 variables for each of the \(2^6\) pairs
-            \(\brak{P_1, P_2}\). Using an efficient algorithm such as the
-            Method of the Four Russians, each solution takes about \(2^{27}\)
-            simple operations or approximately \(2^{21}\) encryptions. Thus,
-            the overall time complexity is \(2^{29}\).
-            \item The memory complexity is dominated by the memory required for
-            solving the equations, which is about \(2^{17}\) 128-bit blocks.
+            \item Using structures, number of chosen plaintexts reduced to
+            \(2^{14}\), thus overall data complexity is less than \(2^{17.5}\)
+            chosen plaintexts and adaptively chosen ciphertexts.
+            \item Time complexity is dominated by solving a system of 1034
+            equations in 1024 variables for each of the \(2^6\) pairs
+            \(\brak{P_1, P_2}\).
+            \item Using efficient algorithms to solve the linear equation such
+            as the Method of the Four Russians, each solution takes about
+            \(2^{27}\) simple operations or approximately \(2^{21}\)
+            encryptions. Thus, the overall time complexity is \(2^{29}\).
+            \item Memory complexity dominated by the memory required for solving
+            the equations, which is about \(2^{17}\) 128-bit blocks.
         \end{enumerate}
     \end{frame}
 
-    \begin{frame}[<+->]{Improvement From Distinguisher}
+    \begin{frame}[<+->]{Improvement Using a Distinguisher Before the Attack}
         \begin{enumerate}
             \item The equation solving step has to be applied \(2^8\) times
             since we do not know if a pair satisfies the boomerang property.
-            \item To obtain this information in advance, we can use the 
+            \item To obtain this information in advance, we can use the
             five-round yoyo distinguisher.
-            \item In this variant, the time complexity is dominated by the 
-            complexity of the yoyo distinguisher, which is \(2^{25.8}\). The
-            memory complexity is still \(2^{17}\).
+            \item In this variant, the time complexity is dominated by the
+            complexity of the yoyo distinguisher, which is \(2^{25.8}\).
+            \item The memory complexity is still \(2^{17}\).
         \end{enumerate}
     \end{frame}
 
     \section[Retracing Rectangle Attack]{The Retracing Rectange Attack and Mixture Differentials}
     \label{sec:retracing-rectangle}
-    
+
     \subsection{The Amplified Boomerang Attack}
-    \label{subsec:amplified-boomerang}
 
-    \begin{frame}[<+->]{Amplified Boomerang Attack}
+    \begin{frame}[<+->]{The Amplified Boomerang Attack}
         \begin{enumerate}
-            \item Retracing boomerang attack uses the stronger adaptively
-            chosen plaintext and ciphertext model.
-            \item Amplified boomerang attack uses only the chosen plaintext
-            model of attack.
-            \item In this version of the boomerang attack, the adversary 
-            considers \emph{pairs of pairs} of plaintexts 
-            \(\brak{\brak{P_1, P_2}, \brak{P_3, P_4}}\) such that \(P_1 \oplus
-            P_2 = P_3 \oplus P_4 = \alpha\). For each pair, the adversary
-            checks whether the corresponding quartet of ciphertexts
-            \(\brak{\brak{C_1, C_2}, \brak{C_3, C_4}}\) satisfy \(C_1 \oplus
-            C_2 = C_3 \oplus C_4 = \delta\).
-            The analysis behind this distinguisher is that the overall probability of the
-            boomerang is \(p^2q^2\), thus if \(pq \gg 2^{-n/2}\), then a distinguisher can
-            be created using \(4 \cdot 2^{n/2}\brak{pq}^{-1}\) chosen plaintexts. The time
-            complexity of this attack is \(\cO\brak{2^{n/2}\brak{pq}^{-1}}\) using hash
-            tables.
-
+            \item The retracing boomerang attack uses the stronger adaptively
+            chosen plaintext and ciphertext model. However, the amplified
+            boomerang attack uses only the chosen plaintext model of attack.
+            \item In this setting, adversary considers \emph{pairs of pairs} of
+            plaintexts \(\brak{\brak{P_1, P_2}, \brak{P_3, P_4}}\) such that
+            \(P_1 \oplus P_2 = P_3 \oplus P_4 = \alpha\).
+            \item For each pair, adversary checks whether corresponding quartet
+            of ciphertexts \(\brak{\brak{C_1, C_2}, \brak{C_3, C_4}}\) satisfy
+            \(C_1 \oplus C_2 = C_3 \oplus C_4 = \delta\).
+            \item Overall probability of the boomerang is \(p^2q^2\), thus if
+            \(pq \gg 2^{-n/2}\), then a distinguisher can be created using \(4
+            \cdot 2^{n/2}\brak{pq}^{-1}\) chosen plaintexts.
+            \item Time complexity of this attack is
+            \(\cO\brak{2^{n/2}\brak{pq}^{-1}}\) using hash tables.
         \end{enumerate}
     \end{frame}
-\subsection{The Retracing Rectangle Attack}
 
-Translating a retracing boomerang attack to a retracing rectangle attack follows
-the same idea as translating a (classical) boomerang attack to a rectangle
-attack. We start with decomposing \(E = E_1 \circ E_{02} \circ E_{01}\), where
-\(E_{01}\) divides the state into two parts of \(b\) and \(n - b\) bits.
-Further, suppose that there exists differential characteristics \(\alpha_L
-\xrightarrow{p_1^L} \mu_L\) for \(E_{01}^L\), \(\alpha_R \xrightarrow{p_1^R}
-\mu_R\) for \(E_{01}^R\), \(\mu \xrightarrow{p_2} \beta\) for \(E_{02}\) and
-\(\gamma \xrightarrow{q} \delta\) for \(E_1\). This is illustrated in
-\autoref{fig:retr-rectangle}.
+    \subsection{The Retracing Rectangle Attack}
+    \label{subsec:retracing-rectangle}
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.6\columnwidth]{images/retracing_rectangle.png}
-    \caption{The retracing rectangle attack.}
-    \label{fig:retr-rectangle}
-\end{figure}
+    \begin{frame}{The Retracing Rectangle Attack}
+        \begin{figure}
+            \centering
+            \includegraphics[width=0.6\columnwidth]{images/retracing_rectangle.png}
+            \caption{The retracing rectangle attack.}
+            \label{fig:retr-rectangle}
+        \end{figure}
+    \end{frame}
+    
+    \begin{frame}{The Retracing Rectangle Attack}
+        \begin{enumerate}[<+->]
+            \item Similar to translating (classical) boomerang to rectangle.
+            \item Start with decomposing \(E = E_1 \circ E_{02} \circ E_{01}\),
+            where \(E_{01}\) divides the state into two parts of \(b\) and \(n -
+            b\) bits as illustrated in \cref{fig:retr-rectangle}.
+            \item Distinguisher can be built if \(p_1^Lp_1^Rp_2q \gg 2^{-n/2}\).
+            \item Consider quartets such that
+            \begin{equation}
+                \brak{P_1 \oplus P_2 = \alpha} \land \brak{P_3 \oplus P_4 = \alpha} \land \brak{P_1^L \oplus P_3^L = 0 \textrm{ or } \alpha_L}.
+                \label{eq:retr-rect-cond}
+            \end{equation}
+            From \eqref{eq:retr-rect-cond}, \(\cbrak{P_1^L, P_2^L} =
+            \cbrak{P_3^L, P_4^L}\). If one of them satisfies the characteristic
+            of \(E_{01}^L\), \emph{so does the other.}
+            \item Improves distinguisher probability by a factor of
+            \(\brak{p_1^L}^{-1}\).
+            \item Unlike shifting retracing, \emph{no filtering} and better
+            signal to noise ratio.
+            \item Adversary uses structure \(\cS\) of plaintext pairs with input
+            difference \(\alpha\).
+            \item Instead of checking all \(\binom{\abs{\cS}}{2}\) pairs, hash
+            table can check all quartets in \(\cO\brak{\abs{\cS}}\) time.
+        \end{enumerate}
+    \end{frame}
 
-A distinguisher can be built assuming \(p_1^Lp_1^Rp_2q \gg 2^{-n/2}\) as before.
-However, in the retracing rectangle attack, we consider plaintext quartets that
-satisfy
-\begin{equation}
-    \brak{P_1 \oplus P_2 = \alpha} \land \brak{P_3 \oplus P_4 = \alpha} \land \brak{P_1^L \oplus P_3^L = 0 \textrm{ or } \alpha_L}.
-    \label{eq:retr-rect-cond}
-\end{equation}
-As a result of \eqref{eq:retr-rect-cond}, \(\cbrak{P_1^L, P_2^L} = \cbrak{P_3^L,
-P_4^L}\). If one of them satisfies the differential characteristic of
-\(E_{10}^L\), then so does the other. This improves the probability of the
-distinguisher by a factor of \(\brak{p_1^L}^{-1}\).
+    \subsection{Mixing Variant and Relation to Mixture Differentials}
+    \label{subsec:mixing-variant}
 
-Unlike the shifting retracing boomerang attack, there is no need to filter data
-to obtain an improvement. Additionally, the signal to noise ratio is improved.
-Usually, the adversary starts with a structure \(\cS\) of plaintext pairs with
-input difference \(\alpha\). Instead of checking all \(\binom{\abs{\cS}}{2}\)
-pairs, a hash table is used to check all quartets in \(\cO\brak{\abs{\cS}}\)
-time.
-
-\subsection{Mixing Variant and Relation to Mixture Differentials}
-
-Similar to the mixing retracing boomerang attack, the adversary can force,
-\(\cbrak{P_1^L, P_2^L} = \cbrak{P_3^L, P_4^L}\) by choosing \(P_3 = \brak{P_2^L,
-P_1^R}\) and \(P_4 = \brak{P_1^L, P_2^R}\). As this choice forces
-\(\cbrak{P_1^R, P_2^R} = \cbrak{P_3^R, P_4^R}\), the probability of the
-rectangle distinguisher is increased by a factor of \(\brak{p_1^Lp_1^R}^{-1}\).
-
-    \section{The Retracing Rectange Attack and Mixture Differentials}
-
-A drawback of the retracing boomerang attack is that it uses the stronger
-adaptively chosen plaintext and ciphertext model. However, the amplified
-boomerang attack uses only the chosen plaintext model of attack. We first
-explore this attack before introducing the retracing variant.
-
-\subsection{The Amplified Boomerang Attack}
-
-In this version of the boomerang attack, the adversary considers \emph{pairs of
-pairs} of plaintexts \(\brak{\brak{P_1, P_2}, \brak{P_3, P_4}}\) such that \(P_1
-\oplus P_2 = P_3 \oplus P_4 = \alpha\). For each such pair, the adversary then
-checks whether the corresponding quartet of ciphertexts \(\brak{\brak{C_1, C_2},
-\brak{C_3, C_4}}\) satisfy \(C_1 \oplus C_2 = C_3 \oplus C_4 = \delta\).
-
-The analysis behind this distinguisher is that the overall probability of the
-boomerang is \(p^2q^2\), thus if \(pq \gg 2^{-n/2}\), then a distinguisher can
-be created using \(4 \cdot 2^{n/2}\brak{pq}^{-1}\) chosen plaintexts. The time
-complexity of this attack is \(\cO\brak{2^{n/2}\brak{pq}^{-1}}\) using hash
-tables.
-
-\subsection{The Retracing Rectangle Attack}
-
-Translating a retracing boomerang attack to a retracing rectangle attack follows
-the same idea as translating a (classical) boomerang attack to a rectangle
-attack. We start with decomposing \(E = E_1 \circ E_{02} \circ E_{01}\), where
-\(E_{01}\) divides the state into two parts of \(b\) and \(n - b\) bits.
-Further, suppose that there exists differential characteristics \(\alpha_L
-\xrightarrow{p_1^L} \mu_L\) for \(E_{01}^L\), \(\alpha_R \xrightarrow{p_1^R}
-\mu_R\) for \(E_{01}^R\), \(\mu \xrightarrow{p_2} \beta\) for \(E_{02}\) and
-\(\gamma \xrightarrow{q} \delta\) for \(E_1\). This is illustrated in
-\autoref{fig:retr-rectangle}.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.6\columnwidth]{images/retracing_rectangle.png}
-    \caption{The retracing rectangle attack.}
-    \label{fig:retr-rectangle}
-\end{figure}
-
-A distinguisher can be built assuming \(p_1^Lp_1^Rp_2q \gg 2^{-n/2}\) as before.
-However, in the retracing rectangle attack, we consider plaintext quartets that
-satisfy
-\begin{equation}
-    \brak{P_1 \oplus P_2 = \alpha} \land \brak{P_3 \oplus P_4 = \alpha} \land \brak{P_1^L \oplus P_3^L = 0 \textrm{ or } \alpha_L}.
-    \label{eq:retr-rect-cond}
-\end{equation}
-As a result of \eqref{eq:retr-rect-cond}, \(\cbrak{P_1^L, P_2^L} = \cbrak{P_3^L,
-P_4^L}\). If one of them satisfies the differential characteristic of
-\(E_{10}^L\), then so does the other. This improves the probability of the
-distinguisher by a factor of \(\brak{p_1^L}^{-1}\).
-
-Unlike the shifting retracing boomerang attack, there is no need to filter data
-to obtain an improvement. Additionally, the signal to noise ratio is improved.
-Usually, the adversary starts with a structure \(\cS\) of plaintext pairs with
-input difference \(\alpha\). Instead of checking all \(\binom{\abs{\cS}}{2}\)
-pairs, a hash table is used to check all quartets in \(\cO\brak{\abs{\cS}}\)
-time.
-
-\subsection{Mixing Variant and Relation to Mixture Differentials}
-
-Similar to the mixing retracing boomerang attack, the adversary can force,
-\(\cbrak{P_1^L, P_2^L} = \cbrak{P_3^L, P_4^L}\) by choosing \(P_3 = \brak{P_2^L,
-P_1^R}\) and \(P_4 = \brak{P_1^L, P_2^R}\). As this choice forces
-\(\cbrak{P_1^R, P_2^R} = \cbrak{P_3^R, P_4^R}\), the probability of the
-rectangle distinguisher is increased by a factor of \(\brak{p_1^Lp_1^R}^{-1}\).
-
+    \begin{frame}[<+->]{Mixing Variant and Relation to Mixture Differentials}
+        \begin{enumerate}
+            \item Similar to mixing retracing boomerang attack, adversary forces
+            \(\cbrak{P_1^L, P_2^L} = \cbrak{P_3^L, P_4^L}\) by choosing \(P_3 =
+            \brak{P_2^L, P_1^R}\) and \(P_4 = \brak{P_1^L, P_2^R}\).
+            \item As this choice forces \(\cbrak{P_1^R, P_2^R} = \cbrak{P_3^R,
+            P_4^R}\), the probability of the rectangle distinguisher is
+            increased by a factor of \(\brak{p_1^Lp_1^R}^{-1}\).
+        \end{enumerate}
+    \end{frame}
 \end{document}
