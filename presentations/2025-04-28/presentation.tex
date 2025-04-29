@@ -58,9 +58,10 @@
 \usepackage{./presentation_macros}
 
 \title{The Retracing Boomerang Attack}
-\date{April 28, 2025}
+\subtitle{EUROCRYPT 2020\\Orr Dunkelman, Nathan Keller, Eyal Ronen, and Adi Shamir}
 \author{Gautam Singh}
 \institute[IITH]{Indian Institute of Technology Hyderabad}
+\date{May 3, 2025}
 
 \begin{document}
     
@@ -183,11 +184,10 @@
             \item Similar to boomerang, starts by encrypting \(\brak{P_1, P_2}\)
             to \(\brak{C_1, C_2}\), then modifying them to \(\brak{C_3, C_4}\)
             and decrypting them.
-            \item \emph{Unlike} the boomerang attack, this process continues in
-            the yoyo game.
-            \item \emph{All} pairs of intermediate values \(\brak{X_{2l + 1},
-            X_{2l + 2}}\) satisfy some property (such as zero difference in some
-            part).
+            \item Unlike the boomerang attack, this \emph{continues} in the yoyo
+            game.
+            \item All pairs of intermediate values \(\brak{X_{2l + 1}, X_{2l +
+            2}}\) satisfy some property (such as zero difference in some part).
             \item Probabilities are low with large \(l\). Still, the yoyo
             technique has been used to attack AES reduced to 5 rounds.
         \end{enumerate}
@@ -209,15 +209,14 @@
         \end{definition}
         \pause
         \begin{enumerate}
-            \item<2->  If \(\brak{P_1, P_2, P_3, P_4}\) is a mixture, then XOR
-            of the intermediate values \(\brak{X_1, X_2, X_3, X_4}\) is zero.
+            \item<2-> If \(\brak{P_1, P_2, P_3, P_4}\) is a mixture, then XOR of
+            the intermediate values \(\brak{X_1, X_2, X_3, X_4}\) is zero.
             \item<3-> \(X_1 \oplus X_3 = \gamma \implies X_2 \oplus X_4 =
             \gamma\). Hence, for \(\gamma \xrightarrow{q} \delta\) in \(E_1\),
             \(C_1 \oplus C_3 = C_2 \oplus C_4 = \delta\) with probability
             \(q^2\).
-            \item<4-> Has been applied to AES reduced up to 6 rounds. \(E_0\) is
-            taken to be the first 1.5 rounds of AES, which can be treated as
-            four parallel super S-boxes.
+            \item<4-> Mixture differentials have been applied to AES reduced up
+            to 6 rounds.
         \end{enumerate}
     \end{frame}
 
@@ -258,21 +257,18 @@
             \item Adds a \(\brak{b - 1}\)-bit filtering in the middle of the
             attack procedure.
             \item Check if \(C_1^L \oplus C_2^L = 0 \textrm{ or } \delta_L\).
-            \emph{Discard all such pairs that do not satisfy this relation}.
-            \item A \(\delta\)-shift is performed on the filtered ciphertext
-            pairs to get \(\brak{C_3, C_4}\).
-            \item Filtering ensures that the two unordered pairs \(\brak{C_1,
-            C_3}\) and \(\brak{C_2, C_4}\) are \emph{equal}.
-            \item If one of these pairs satisfies the differential
-            characteristic \(\delta_L \xrightarrow{q_2^L} \mu_L\), \emph{the
-            other pair will too!}.
+            \emph{Discard all pairs not satisfying this relation}.
+            \item \(\delta\)-shift is performed on the filtered ciphertext pairs
+            to get \(\brak{C_3, C_4}\).
+            \item Filtering ensures \(\cbrak{C_1, C_3} = \cbrak{C_2, C_4}\).
+            \emph{If one of these pairs satisfies \(\delta_L \xrightarrow{q_2^L}
+            \mu_L\), the other pair will too!}.
             \item Increases the probability of the boomerang distinguisher by
             \(\brak{q_2^L}^{-1}\).
-            \item Any possible characteristic of \(\brak{E_{12}^L}\) has
-            probability at least \(2^{-b + 1}\), thus the overall probability
-            increases by a factor of at most \(2^{b - 1}\). On the other hand,
-            filtering only leaves \(2^{-b + 1}\) of the pairs, so there is no
-            apparent gain.
+            \item Any possible characteristic of \(E_{12}^L\) has probability at
+            least \(2^{-b + 1}\), thus overall probability increases by a factor
+            of at most \(2^{b - 1}\). On the other hand, filtering only leaves
+            \(2^{-b + 1}\) of the pairs, so \emph{no apparent gain?}
         \end{enumerate}
     \end{frame}
 
@@ -286,20 +282,18 @@
 
     \begin{frame}[<+->]{Advantages of Filtering}
         \begin{enumerate}
-            \item \emph{Improving the signal to noise ratio.} Improving the
-            probability by a factor of \(\brak{q_2^L}^{-1}\) improves the SNR
-            which ensures a higher fraction of the filtered pairs on average
-            satisfy \(P_3 \oplus P_4 = \alpha\). The characteristic \(\beta
-            \xrightarrow{p} \alpha\) in the backward direction for the pair
-            \(\brak{X_3, X_4}\) can be replaced by a truncated differential
-            characteristic \(\beta \xrightarrow{p^\prime} \alpha^\prime\) of
-            higher probability.
-            \item \emph{Reducing the data complexity.} Due to the filtering, the
-            attack leaves fewer ciphertexts. This improves the complexity in
-            cases where more decryption queries are made.
-            \item \emph{Reducing the time complexity.} The filtering can also
-            reduce the time complexity if it is dominated by the analysis of the
-            plaintext pairs \(\brak{P_3, P_4}\).
+            \item \emph{Improving the signal to noise ratio.} Improving
+            probability by a factor of \(\brak{q_2^L}^{-1}\) improves SNR which
+            ensures a higher fraction of the filtered pairs on average satisfy
+            \(P_3 \oplus P_4 = \alpha\). Then, \(\beta \xrightarrow{p} \alpha\)
+            in the backward direction for \(\brak{X_3, X_4}\) can be replaced by
+            a truncated characteristic \(\beta \xrightarrow{p^\prime}
+            \alpha^\prime\) of higher probability.
+            \item \emph{Reducing the data complexity.} Due to filtering, fewer
+            ciphertexts left, improving data complexity when more decryption
+            queries are made.
+            \item \emph{Reducing the time complexity.} Filtering can also reduce
+            time complexity if dominated by the analysis of \(\brak{P_3, P_4}\).
         \end{enumerate}
     \end{frame}
 
@@ -308,20 +302,18 @@
 
     \begin{frame}[<+->]{The Mixing Retracing Boomerang Attack}
         \begin{enumerate}
-            \item In the shifting attack, the attacker forces equality between
-            the unordered pairs \(\brak{C_1^L, C_2^L}\) and \(\brak{C_3^L,
-            C_4^L}\) using a \(\delta\)-shift.
-            \item In this type of attack, each ciphertext pair can be shifted by
-            \(\brak{C_1^L \oplus C_2^L, 0}\). The resulting ciphertexts are
+            \item In shifting attack, \(\cbrak{C_1^L, C_2^L} = \cbrak{C_3^L,
+            C_4^L}\) forced using a \(\delta\)-shift.
+            \item Each ciphertext shifted by \(\brak{C_1^L \oplus C_2^L, 0}\),
+            thus
             \begin{align}
                 C_3 &= \brak{C_3^L, C_3^R} = \brak{C_1^L \oplus \brak{C_1^L \oplus C_2^L}, C_1^R} = \brak{C_2^L, C_1^R}, \\
                 C_4 &= \brak{C_4^L, C_4^R} = \brak{C_2^L \oplus \brak{C_1^L \oplus C_2^L}, C_2^R} = \brak{C_1^L, C_2^R}.
             \end{align}
-            \item Again, the unordered pairs \(\brak{C_1^L, C_2^L}\) and
-            \(\brak{C_3^L, C_4^L}\) are equal.
-            \item Further, \(C_1^R = C_3^R\) and \(C_2^R = C_4^R\), thus we gain
-            an \emph{additional} factor of \(\brak{q_2^R}^{-2}\) for a total
-            probability of \(\brak{pq_1}^2q_2^L\), \emph{better than shifting}!
+            Here, \(\cbrak{C_1^L, C_2^L} = \brak{C_3^L, C_4^L}\).
+            \item Further, \(C_1^R = C_3^R\) and \(C_2^R = C_4^R\).
+            \emph{Additional} gain of \(\brak{q_2^R}^{-2}\) for total
+            probability \(\brak{pq_1}^2q_2^L\), \emph{better than shifting!}
             \item Similar to the core step used in the yoyo attack on AES.
         \end{enumerate}
     \end{frame}
@@ -411,9 +403,9 @@
             \item For \(E_{12}\), 1.5 rounds of AES can be taken as four 32-bit
             super S-boxes.
             \item Ciphertext pair \(\brak{C_1, C_2}\) modified into its mixture
-            \(\brak{C_3, C_4}\) w.r.t. super S-boxes and decrypted. The four
-            inputs to the S-boxes have zero XOR, thus \(X_1 \oplus X_2 \oplus
-            X_3 \oplus X_4 = 0\) since MC is linear. 
+            \(\brak{C_3, C_4}\) wrt super S-boxes and decrypted. The four inputs
+            to the S-boxes have zero XOR, thus \(X_1 \oplus X_2 \oplus X_3
+            \oplus X_4 = 0\) since MC is linear. 
             \item \(X_3 \oplus X_4 = 0\) in a shifted column and \(Z_3 \oplus
             Z_4 = 0\) in an inverse shifted column with probability \(2^{-6}\).
             This corresponds to one of the four quartets \(\brak{0,5,10,15}\),
@@ -474,9 +466,9 @@
                 Z_0 = 02_x \cdot W_0 \oplus 03_x \cdot W_1 \oplus 01_x \cdot W_2 \oplus 01_x \cdot W_3.
                 \label{eq:mitm}
             \end{equation}
-            \item The adversary guesses bytes 0, 5 of \(k_{-1}\) by computing
-            the following for \(j = 1, 2, 3\) and storing the concatenated
-            24-bit value in a hash table.
+            \item Adversary guesses \(k_{-1, \cbrak{0, 5}}\) by computing the
+            following for \(j = 1, 2, 3\) and storing the concatenated 24-bit
+            value in a hash table.
             \begin{equation}
                 02_x \cdot \brak{\brak{W_3^j}_0 \oplus \brak{W_4^j}_0} \oplus 03_x \cdot \brak{\brak{W_3^j}_1 \oplus \brak{W_4^j}_1}
                 \label{eq:mitm-0-5}
@@ -488,8 +480,8 @@
     \begin{frame}[<+->]{Meet in the Middle Improvement on Yoyo Attack}
         \begin{enumerate}
             \conti
-            \item Similarly, the adversary does this for bytes 10, 15 of
-            \(k_{-1}\), computing
+            \item Similarly, the adversary does this for \(k_{-1, \cbrak{10,
+            15}}\), computing
             \begin{equation}
                 01_x \cdot \brak{\brak{W_3^j}_2 \oplus \brak{W_4^j}_2} \oplus 01_x \cdot \brak{\brak{W_3^j}_3 \oplus \brak{W_4^j}_3}
                 \label{eq:mitm-10-15}
@@ -497,9 +489,10 @@
             \item The adversary checks for a match in the table, which is
             equivalent to \(\brak{Z_3^j}_0 = \brak{Z_4^j}_0\) for \(j = 1, 2,
             3\).
-            \item 24-bit filtering leaves \(2^8\) candidates for bytes 0, 5, 10,
-            15 of \(k_{-1}\), checked using the conditions \(\brak{Z_3^4}_0 =
-            \brak{Z_4^4}_0\) and \(\brak{Z_1}_0 = \brak{Z_2}_0\).
+            \item This 24-bit filtering leaves \(2^8\) candidates for \(k_{-1,
+            \cbrak{0,5,10,15}}\). They are checked using the conditions
+            \(\brak{Z_3^4}_0 = \brak{Z_4^4}_0\) and \(\brak{Z_1}_0 =
+            \brak{Z_2}_0\).
             \item Although the data complexity looks like \(2^{16}\), the
             \emph{dissection technique} can be used to maintain the memory at
             \(2^9\).
@@ -544,11 +537,11 @@
             \item For each \(\brak{P_1, P_2}\) and for each guess of \(k_{-1,
             0}\), use \eqref{eq:mitm-simple} to compute the output difference of
             the SB operation in byte 5.
-            \item We can lookup to find inputs that can lead to this difference
-            and retrieve possible values of \(k_{-1, 5}\) that correspond to the
+            \item Lookup to find inputs that can lead to this difference and
+            retrieve possible values of \(k_{-1, 5}\) corresponding to the
             guessed \(k_{-1, 0}\).
-            \item Gives \(2^8\) values of \(k_{-1, \cbrak{0, 5}}\) in about
-            \(2^8\) simple operations per pair.
+            \item Obtain \(2^8\) candidates for \(k_{-1, \cbrak{0, 5}}\) in
+            about \(2^8\) operations per pair.
         \end{enumerate}        
     \end{frame}
 
@@ -618,18 +611,17 @@
                 next pair.
             \end{enumerate}
             \item Using a pair \(\brak{P_1, P_2}\) for which no contradiction
-            occurred, perform similar MITM attacks on columns 1, 2 and 3 of
-            round 0 using the fact that \(Z_3 \oplus Z_4\) equals 0 in the
-            \(l\)-th inverse shifted column to recover the entire \(k_{-1}\). 
+            occurred, perform MITM attacks on columns 1, 2 and 3 of round 0
+            using the fact that \(Z_3 \oplus Z_4\) equals 0 in the \(l\)-th
+            inverse shifted column to recover \(k_{-1}\). 
         \end{enumerate}
     \end{frame}
 
     \begin{frame}[<+->]{Attack Analysis}
         \begin{enumerate}
-            \item The attack succeeds if the data contains a pair that satisfies
-            the truncated differential characteristic of \(E_0\) and for one of
-            the `friend pairs' of that pair, the corresponding plaintext pair
-            \(\brak{P_3^j, P_4^j}\) has zero difference in either byte 10 or 15.
+            \item Attack succeeds if data contains a pair that satisfies the
+            truncated differential characteristic of \(E_0\) and if a friend
+            pair has zero difference in either byte 10 or 15.
             \item Increasing the number of initial pairs and friend pairs per
             initial pair boosts success probability. With 64 pairs and 128
             friend pairs per initial pair, the probability of success is
@@ -651,16 +643,16 @@
             \conti
             \item Data complexity is \(2 \cdot 2^6 \cdot 2^7 = 2^{14}\) chosen
             plaintexts and \(2^{14}\) adaptively chosen ciphertexts.
-            \item Structures can reduce the data complexity to slightly above
-            \(2^{14}\) adaptively chosen ciphertexts and plaintexts, but also
-            slightly reduces the success probability due to additional
-            dependencies between analyzed pairs.
-            \item Memory complexity of the attack remains at \(2^9\) 128-bit
-            memory cells, like the yoyo attack.
-            \item Time complexity is dominated by several MITM attacks that take
-            \(2^{16}\) operations each. Considering one AES operation to be
-            equivalent to 80 S-box lookups and adding it to the number of
-            queries gives us a total of \(2^{16.5}\) encryptions.
+            \item Structures reduce the data complexity to slightly above
+            \(2^{14}\) adaptively chosen ciphertexts and plaintexts, but success
+            probability slightly reduced due to additional dependencies between
+            analyzed pairs.
+            \item Memory complexity of the attack remains at \(2^9\), like yoyo
+            attack.
+            \item Time complexity dominated by MITM attacks that take \(2^{16}\)
+            operations each. Taking one AES operation equivalent to 80 S-box
+            lookups and adding it to the number of queries gives us a total of
+            \(2^{16.5}\) encryptions.
         \end{enumerate} 
     \end{frame}
 
@@ -672,7 +664,7 @@
             \item Retracing boomerang attack recovers the secret key without
             fully recovering the secret S-box (the S-box is recovered upto an
             affine transformation in \(GF\brak{2^8}\)).
-            \item The idea exploit the fact that with probability \(2^{-6}\),
+            \item Idea is to exploit the fact that with probability \(2^{-6}\),
             the pair \(\brak{Z_3, Z_4}\) has zero difference in an inverse
             shifted column.
             \item This does not depend on the specific structure of \(MC\) and
