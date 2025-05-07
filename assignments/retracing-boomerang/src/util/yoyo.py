@@ -67,8 +67,8 @@ def yoyo_distinguisher_5rd(aes: AES) -> bool:
         while cnt2 < CNT2 and wrong_pair == False:
             cnt2 += 1
             # Encrypt plaintexts
-            d0 = aes.encrypt(p0)
-            d1 = aes.encrypt(p1)
+            d0 = aes.encrypt_(p0)
+            d1 = aes.encrypt_(p1)
             # In the original paper, the last SR and MC are stripped, so we
             # apply inverse MC and SR to get the real ciphertexts that should be
             # compared. However, in an actual AES implementation, the last MC is
@@ -78,8 +78,8 @@ def yoyo_distinguisher_5rd(aes: AES) -> bool:
             # Perform the SimpleSWAP operation on the ciphertexts
             cc0, cc1 = simple_swap(c0, c1)
             # Perform decryption on the new ciphertexts to get friend pairs.
-            qq0 = aes.decrypt(cc0)
-            qq1 = aes.decrypt(cc1)
+            qq0 = aes.decrypt_(cc0)
+            qq1 = aes.decrypt_(cc1)
             # Apply SR to remove the last inverse SR. Again, the last MC is not
             # applied in this implementation.
             pp0 = aes.shift_rows(qq0)

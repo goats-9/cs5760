@@ -1,3 +1,4 @@
 galois
 numpy
 pytest
+pytest-repeat
