@@ -18,12 +18,11 @@ def simple_swap(x: galois.FieldArray, y: galois.FieldArray) -> tuple[galois.Fiel
     """
     assert x.shape == y.shape, ValueError(f"Shapes of x and y must be equal, got {x.shape} and {y.shape}.")
     assert x.ndim == 2, ValueError(f"x and y must be 2D arrays, got {x.ndim}D.")
-    for i in range(x.shape[1]):
-        # Find the first word that is unequal in x and y
-        if (x[:, i] != y[:, i]).any():
-            # Swap this word and return
-            x[:, [i]], y[:, [i]] = y[:, [i]], x[:, [i]]
-            return x, y
+    col_diff = np.any(x != y, axis=0)
+    if col_diff.any():
+        i = col_diff.argmax()
+        x[:, [i]], y[:, [i]] = y[:, [i]], x[:, [i]]
+        return x, y
     raise ValueError(f"Inputs to SimpleSWAP must be different, got {x}, {y}.")
 
 def yoyo_distinguisher_5rd(aes: AES) -> tuple[bool, galois.FieldArray, galois.FieldArray]:
