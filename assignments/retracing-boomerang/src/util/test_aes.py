@@ -2,7 +2,8 @@ from .aes import AES
 
 class TestAES:
     """
-    Test the 128-bit AES implementation using the NIST test vectors.
+    Test the 128-bit AES implementation using the NIST AESAVS test vectors from
+    https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/aes/AESAVS.pdf
     """
     def test_aes_gfsbox(self):
         test_vectors = r"""f34481ec3cc627bacd5dc3fb08f273e6 0336763e966d92595a567cc9ce537f5e

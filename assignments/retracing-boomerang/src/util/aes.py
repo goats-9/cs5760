@@ -106,29 +106,51 @@ class AES:
         self.key_schedule = key_schedule(self.key, self.num_rounds)
 
     def encrypt_(self, pt: galois.FieldArray) -> galois.FieldArray:
+        state = pt.copy()
         # Apply whitening key to plaintext
-        pt = pt + self.key_schedule[0]
+        state += self.key_schedule[0]
         
         # Do rounds 1 to n - 1
         for i in range(1, self.num_rounds):
             # Apply S-Box transformation
-            pt = self.s_box(pt, i)
+            state = self.s_box(state, i)
             # Apply Shift Rows transformation
-            pt = self.shift_rows(pt)
+            state = self.shift_rows(state)
             # Apply Mix Columns transformation
-            pt = self.mix_columns(pt, i)
+            state = self.mix_columns(state, i)
             # Add round key
-            pt = pt + self.key_schedule[i]
+            state += self.key_schedule[i]
         
         # Do the last round (no Mix Columns)
         # Apply S-Box transformation
-        pt = self.s_box(pt, self.num_rounds - 1)
+        state = self.s_box(state, self.num_rounds - 1)
         # Apply Shift Rows transformation
-        pt = self.shift_rows(pt)
+        state = self.shift_rows(state)
         # Add round key
-        pt = pt + self.key_schedule[-1]
+        state += self.key_schedule[-1]
         # Return the ciphertext
-        return pt
+        return state
+    
+    def encrypt_ronjom_(self, pt: galois.FieldArray) -> galois.FieldArray:
+        state = pt.copy()
+        state += self.key_schedule[0]
+        state = self.s_box(state, 0)
+        state = self.mix_columns(state, 0)
+        state += self.key_schedule[1]
+        state = self.shift_rows(state)
+        state = self.s_box(state, 1)
+        state = self.mix_columns(state, 1)
+        state += self.key_schedule[2]
+        state = self.s_box(state, 2)
+        state = self.mix_columns(state, 2)
+        state += self.key_schedule[3]
+        state = self.shift_rows(state)
+        state = self.s_box(state, 3)
+        state = self.mix_columns(state, 3)
+        state += self.key_schedule[4]
+        state = self.s_box(state, 4)
+        state += self.key_schedule[5]
+        return state
     
     def encrypt(self, plaintext: bytes) -> bytes:
         """
@@ -146,31 +168,52 @@ class AES:
         return self.encrypt_(pt).flatten(order='F').tobytes()
 
     def decrypt_(self, ct: galois.FieldArray) -> galois.FieldArray:
-        # Get whitening key
-        whitening_key = self.key_schedule[-1]
+        state = ct.copy()
         # Apply whitening key to ct
-        ct = ct + whitening_key
+        state += self.key_schedule[-1]
         
         # Do rounds n - 1 to 1
         for i in range(self.num_rounds - 1, 0, -1):
             # Apply Inverse Shift Rows transformation
-            ct = self.shift_rows(ct, inv=True)
+            state = self.shift_rows(state, inv=True)
             # Apply Inverse S-Box transformation
-            ct = self.inv_s_box(ct, i)
+            state = self.inv_s_box(state, i)
             # Add round key
-            ct = ct + self.key_schedule[i]
+            state += self.key_schedule[i]
             # Apply Inverse Mix Columns transformation
-            ct = self.inv_mix_columns(ct, i)
+            state = self.inv_mix_columns(state, i - 1)
         
         # Do the last round (no Inverse Mix Columns)
         # Apply Inverse Shift Rows transformation
-        ct = self.shift_rows(ct, inv=True)
+        state = self.shift_rows(state, inv=True)
         # Apply Inverse S-Box transformation
-        ct = self.inv_s_box(ct, 0)
+        state = self.inv_s_box(state, 0)
         # Add round key
-        ct = ct + self.key_schedule[0]
+        state += self.key_schedule[0]
         # Return the plaintext
-        return ct
+        return state
+
+    def decrypt_ronjom_(self, ct: galois.FieldArray) -> galois.FieldArray:
+        state = ct.copy()
+        state += self.key_schedule[5]
+        state = self.inv_s_box(state, 4)
+        state += self.key_schedule[4]
+        state = self.inv_mix_columns(state, 3)
+        state = self.inv_s_box(state, 3)
+        state = self.shift_rows(state, inv=True)
+        state += self.key_schedule[3]
+        state = self.inv_mix_columns(state, 2)
+        state = self.shift_rows(state, inv=True)
+        state = self.inv_s_box(state, 2)
+        state += self.key_schedule[2]
+        state = self.inv_mix_columns(state, 1)
+        state = self.inv_s_box(state, 1)
+        state = self.shift_rows(state, inv=True)
+        state += self.key_schedule[1]
+        state = self.inv_mix_columns(state, 0)
+        state = self.inv_s_box(state, 0)
+        state += self.key_schedule[0]
+        return state
 
     def decrypt(self, ciphertext: bytes) -> bytes:
         """
