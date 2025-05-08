@@ -48,10 +48,20 @@ AES_INV_SBOX_ = GF_([
 ])
 
 # AES Mix Columns Matrix
-AES_MIX_COLUMNS_ = GF_([[2, 3, 1, 1], [1, 2, 3, 1], [1, 1, 2, 3], [3, 1, 1, 2]])
+AES_MIX_COLUMNS_ = GF_([
+    [2, 3, 1, 1],
+    [1, 2, 3, 1],
+    [1, 1, 2, 3],
+    [3, 1, 1, 2],
+])
 
 # AES Inverse Mix Columns Matrix
-AES_INV_MIX_COLUMNS_ = GF_([[14, 11, 13, 9], [9, 14, 11, 13], [13, 9, 14, 11], [11, 13, 9, 14]])
+AES_INV_MIX_COLUMNS_ = GF_([
+    [14, 11, 13, 9],
+    [9, 14, 11, 13],
+    [13, 9, 14, 11],
+    [11, 13, 9, 14],
+])
 
 # AES Round Constants for Key Expansion
 AES_RCON_ = GF_([0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36])
@@ -137,12 +147,12 @@ def aes_key_schedule_(key: galois.FieldArray, num_rounds: int = 10) -> list[galo
         temp = last_key[:, 3].copy()
         temp = GF_(np.roll(temp, -1))
         temp = aes_s_box_(temp, key, i)
-        temp[0] ^= AES_RCON_[i]
+        temp[0] += AES_RCON_[i]
         # Generate the new key
         new_key = last_key.copy()
-        new_key[:, 0] ^= temp
+        new_key[:, 0] += temp
         for j in range(1, 4):
-            new_key[:, j] ^= new_key[:, j - 1]
+            new_key[:, j] += new_key[:, j - 1]
         # Append the new key to the schedule
         key_schedule.append(new_key)
     return key_schedule
