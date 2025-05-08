@@ -16,11 +16,13 @@ def simple_swap(x: galois.FieldArray, y: galois.FieldArray) -> tuple[galois.Fiel
         tuple[galois.FieldArray, galois.FieldArray]: The words after applying 
         SimpleSWAP.
     """
-    for i in range(4):
+    assert x.shape == y.shape, ValueError(f"Shapes of x and y must be equal, got {x.shape} and {y.shape}.")
+    assert x.ndim == 2, ValueError(f"x and y must be 2D arrays, got {x.ndim}D.")
+    for i in range(x.shape[1]):
         # Find the first word that is unequal in x and y
-        if (x[i] != y[i]).any():
+        if (x[:, i] != y[:, i]).any():
             # Swap this word and return
-            x[i], y[i] = y[i], x[i]
+            x[:, [i]], y[:, [i]] = y[:, [i]], x[:, [i]]
             return x, y
     raise ValueError(f"Inputs to SimpleSWAP must be different, got {x}, {y}.")
 
