@@ -25,6 +25,7 @@ class AES:
         Wrapper to apply an AES transformation to the state.
         
         Parameters:
+            step (AesStep): The transformation function to apply.
             state (galois.FieldArray): The state to transform.
             key (galois.FieldArray): The key for the transformation.
             round (int): The round number.
@@ -42,17 +43,17 @@ class AES:
         self._check_state(res)
         return res
 
-    def s_box(self, state: galois.FieldArray, key: galois.FieldArray, round: int) -> galois.FieldArray:
-        return self._step_wrapper(self.s_box_, state, key, round)
+    def s_box(self, state: galois.FieldArray, round: int) -> galois.FieldArray:
+        return self._step_wrapper(self.s_box_, state, self.key_schedule[round], round)
     
-    def inv_s_box(self, state: galois.FieldArray, key: galois.FieldArray, round: int) -> galois.FieldArray:
-        return self._step_wrapper(self.inv_s_box_, state, key, round)
+    def inv_s_box(self, state: galois.FieldArray, round: int) -> galois.FieldArray:
+        return self._step_wrapper(self.inv_s_box_, state, self.key_schedule[round], round)
     
-    def mix_columns(self, state: galois.FieldArray, key: galois.FieldArray, round: int) -> galois.FieldArray:
-        return self._step_wrapper(self.mix_columns_, state, key, round)
+    def mix_columns(self, state: galois.FieldArray, round: int) -> galois.FieldArray:
+        return self._step_wrapper(self.mix_columns_, state, self.key_schedule[round], round)
     
-    def inv_mix_columns(self, state: galois.FieldArray, key: galois.FieldArray, round: int) -> galois.FieldArray:
-        return self._step_wrapper(self.inv_mix_columns_, state, key, round)
+    def inv_mix_columns(self, state: galois.FieldArray, round: int) -> galois.FieldArray:
+        return self._step_wrapper(self.inv_mix_columns_, state, self.key_schedule[round], round)
 
     def shift_rows(self, state: galois.FieldArray, inv: bool = False) -> galois.FieldArray:
         """
@@ -92,7 +93,7 @@ class AES:
         self.inv_mix_columns_ = inv_mix_columns
         if key is None:
             # Pick a random master key
-            self.key = GF_.Random((4, 4))
+            self.key = GF_.Random((4, 4), seed=rng_)
         elif type(key) is bytes:
             # Convert bytes to field element
             self.key = GF_(np.frombuffer(key, dtype=np.uint8).reshape((4, 4), order='F'))
@@ -105,31 +106,27 @@ class AES:
         self.key_schedule = key_schedule(self.key, self.num_rounds)
 
     def encrypt_(self, pt: galois.FieldArray) -> galois.FieldArray:
-        # Get whitening key
-        whitening_key = self.key_schedule[0]
         # Apply whitening key to plaintext
-        pt = pt + whitening_key
+        pt = pt + self.key_schedule[0]
         
         # Do rounds 1 to n - 1
         for i in range(1, self.num_rounds):
-            round_key = self.key_schedule[i]
             # Apply S-Box transformation
-            pt = self.s_box(pt, round_key, i)
+            pt = self.s_box(pt, i)
             # Apply Shift Rows transformation
             pt = self.shift_rows(pt)
             # Apply Mix Columns transformation
-            pt = self.mix_columns(pt, round_key, i)
+            pt = self.mix_columns(pt, i)
             # Add round key
-            pt = pt + round_key
+            pt = pt + self.key_schedule[i]
         
         # Do the last round (no Mix Columns)
-        round_key = self.key_schedule[-1]
         # Apply S-Box transformation
-        pt = self.s_box(pt, round_key, self.num_rounds - 1)
+        pt = self.s_box(pt, self.num_rounds - 1)
         # Apply Shift Rows transformation
         pt = self.shift_rows(pt)
         # Add round key
-        pt = pt + round_key
+        pt = pt + self.key_schedule[-1]
         # Return the ciphertext
         return pt
     
@@ -156,24 +153,22 @@ class AES:
         
         # Do rounds n - 1 to 1
         for i in range(self.num_rounds - 1, 0, -1):
-            round_key = self.key_schedule[i]
             # Apply Inverse Shift Rows transformation
             ct = self.shift_rows(ct, inv=True)
             # Apply Inverse S-Box transformation
-            ct = self.inv_s_box(ct, round_key, i)
+            ct = self.inv_s_box(ct, i)
             # Add round key
-            ct = ct + round_key
+            ct = ct + self.key_schedule[i]
             # Apply Inverse Mix Columns transformation
-            ct = self.inv_mix_columns(ct, round_key, i)
+            ct = self.inv_mix_columns(ct, i)
         
         # Do the last round (no Inverse Mix Columns)
-        round_key = self.key_schedule[0]
         # Apply Inverse Shift Rows transformation
         ct = self.shift_rows(ct, inv=True)
         # Apply Inverse S-Box transformation
-        ct = self.inv_s_box(ct, round_key, 0)
+        ct = self.inv_s_box(ct, 0)
         # Add round key
-        ct = ct + round_key
+        ct = ct + self.key_schedule[0]
         # Return the plaintext
         return ct
 
