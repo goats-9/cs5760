@@ -1,6 +1,9 @@
 import numpy as np
 import galois
 
+# Seed an RNG for reproducibility
+rng_ = np.random.default_rng(0)
+
 # Define the Galois Field for AES
 GF_ = galois.GF(2, 8, irreducible_poly="x^8 + x^4 + x^3 + x + 1")
 
