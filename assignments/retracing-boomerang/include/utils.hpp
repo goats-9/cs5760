@@ -23,6 +23,7 @@ namespace ModularAES {
     using aes_key_t = std::vector<word_t>;
     using aes_step_t = std::function<block_t(block_t, block_t, bool)>;
     using aes_key_schedule_t = std::function<std::vector<block_t>(aes_key_t)>;
+    using oracle_t = std::function<block_t(block_t, bool)>;
 
     /* Galois field operators */
     constexpr byte_t MIN_POLY = 0x1b;   // Minimal polynomial of GF(2^8)
