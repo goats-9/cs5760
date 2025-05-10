@@ -9,6 +9,13 @@ find_package(PkgConfig REQUIRED)
 # Disable in-source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
+# Set debug flags
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -g")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif()
+
 # Include headers
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
