@@ -5,10 +5,12 @@
 
 namespace ModularAES {
     inline aes_step_t add_round_key_ = [](block_t state, block_t subkey, bool dir) {
+        (void)dir;
         return gadd(state, subkey);
     };
 
     inline aes_step_t aes_s_box_ = [](block_t state, block_t subkey, bool dir) {
+        (void)subkey;
         auto& s = dir ? S : Si;
         for (auto &w : state) {
             for (auto &b : w) {
@@ -19,10 +21,13 @@ namespace ModularAES {
     };
 
     inline aes_step_t aes_mix_columns_ = [] (block_t state, block_t subkey, bool dir) {
+        (void)subkey;
+        (void)dir;
         return gmul(dir ? MC : IMC, state);
     };
 
     inline aes_step_t shift_rows_ = [] (block_t state, block_t subkey, bool dir) {
+        (void)subkey;
         for (size_t i = 1; i < NR; ++i) {
             if (dir) {
                 std::rotate(state[i].begin(), state[i].begin() + i, state[i].end());
@@ -81,8 +86,9 @@ namespace ModularAES {
             aes_key_schedule_t key_expansion_ = aes_key_expansion_
         ) : key_(key), s_box_(s_box_), mix_columns_(mix_columns_),
             subkeys_(key_expansion_(key)) {}
+        AES(AES&) = default;
 
-        void encrypt(const block_t input, block_t& output, size_t num_rounds = 0);
-        void decrypt(const block_t input, block_t& output, size_t num_rounds = 0);
+        void encrypt(const block_t, block_t&, size_t = 0);
+        void decrypt(const block_t, block_t&, size_t = 0);
     };
 }
