@@ -66,6 +66,8 @@ namespace ModularAES {
                 simple_swap(p0, p1);
             }
             if (!wrong_pair) {
+                x0 = shift_rows_(x0, {}, false);
+                x1 = shift_rows_(x1, {}, false);
                 return true;
             }
         }
