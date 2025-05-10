@@ -1,7 +1,8 @@
-#include <string>
+#include <cassert>
 #include <iostream>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
+#include <string>
 #include "utils.hpp"
 #include "constants.hpp"
 
@@ -27,16 +28,26 @@ namespace ModularAES {
     }
 
     byte_t gmul(byte_t a, byte_t b) {
-        if (!a || !b) return 0;
-        return Alogtable[(Logtable[a] + Logtable[b])%255];  
+        byte_t result = 0;
+        for (; b; b >>= 1) {
+            if (b & 1) {
+                result ^= a;
+            } 
+            if (a & 0x80) {
+                a = (a << 1) ^ MIN_POLY;
+            } else {
+                a <<= 1;
+            }
+        }
+        return result;
     }
 
     word_t gmul(block_t a, word_t b) {
-        word_t result = {0};
+        word_t result;
         for (size_t i = 0; i < NR; ++i) {
             result[i] = 0;
             for (size_t j = 0; j < NC; ++j) {
-                result[i] ^= gmul(a[i][j], b[j]);
+                result[i] = gadd(result[i], gmul(a[i][j], b[j]));
             }
         }
         return result;
@@ -79,15 +90,30 @@ namespace ModularAES {
         return b;
     }
 
-    aes_key_t random_key() {
-        aes_key_t k;
+    aes_key_t random_key(size_t len) {
+        aes_key_t k(len);
         for (auto &w : k) {
             w = random_word();
         }
         return k;
     }
 
+    void print_word(word_t &w) {
+        for (size_t i = 0; i < NC; ++i) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(w[i]) << " ";
+        }
+        std::cout << std::dec << std::endl;
+    }
+
+    void print_block(block_t &b) {
+        for (auto &w : b) {
+            print_word(w);
+        }
+    }
+
     block_t hex_to_block(std::string &s) {
+        size_t n = s.size();
+        assert(n == 32);
         block_t b;
         int p = 0;
         for (size_t j = 0; j < NC; ++j) {
@@ -97,6 +123,20 @@ namespace ModularAES {
             }
         }
         return b;
+    }
+
+    aes_key_t hex_to_key(std::string &s) {
+        size_t n = s.size();
+        assert(n == 32 || n == 48 || n == 64);
+        aes_key_t key(n / 8);
+        int p = 0;
+        for (auto& k : key) {
+            for (size_t i = 0; i < NC; ++i) {
+                k[i] = static_cast<byte_t>(std::strtoul(s.substr(p, 2).c_str(), nullptr, 16));
+                p += 2;
+            }
+        }
+        return key;
     }
 
     std::string block_to_hex(block_t &b) {
