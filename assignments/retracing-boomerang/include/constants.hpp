@@ -5,7 +5,7 @@
 
 #include "utils.hpp"
 
-namespace ModularAES {
+namespace modular_aes {
     // AES S-box
     constexpr std::array<byte_t, 256> S = {{
          99, 124, 119, 123, 242, 107, 111, 197,  48,   1, 103,  43, 254, 215, 171, 118, 

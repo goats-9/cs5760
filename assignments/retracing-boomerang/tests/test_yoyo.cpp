@@ -1,22 +1,15 @@
 #include "aes.hpp"
+#include "oracle.hpp"
 #include "utils.hpp"
 #include "yoyo.hpp"
 #include <cassert>
 #include <iomanip>
 #include <iostream>
-using namespace ModularAES;
+using namespace modular_aes;
 
 void test_yoyo_pass(size_t runs = 10) {
     auto key = random_key(NK_128);
-    AES aes(key);
-    std::function<block_t(block_t, bool)> oracle = [&](block_t x, bool enc) {
-        if (enc) {
-            aes.encrypt(x, x, 5);
-        } else {
-            aes.decrypt(x, x, 5);
-        }
-        return x;
-    };
+    AESOracle oracle(key);
     block_t p0, p1;
     while (runs--) {
         assert(yoyo_distinguisher_5rd(oracle, p0, p1));    
@@ -25,19 +18,7 @@ void test_yoyo_pass(size_t runs = 10) {
 
 void test_yoyo_fail(size_t runs = 10) {
     auto key = random_key(NK_128);
-    AES aes(key);
-    std::function<block_t(block_t, bool)> oracle = [&](block_t x, bool enc) {
-        if (enc) {
-            for (int i = 1; i < 3; i++) {
-                aes.encrypt(x, x);
-            }
-        } else {
-            for (int i = 1; i < 3; i++) {
-                aes.decrypt(x, x);
-            }
-        }
-        return x;
-    };
+    RandomAESOracle oracle(key);
     block_t p0, p1;
     while (runs--) {
         assert(!yoyo_distinguisher_5rd(oracle, p0, p1));    

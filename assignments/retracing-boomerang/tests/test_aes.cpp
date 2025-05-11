@@ -5,7 +5,7 @@
 #include "aes.hpp"
 #include "utils.hpp"
 
-using namespace ModularAES;
+using namespace modular_aes;
 
 void gfsbox_test() {
     std::vector<std::string> test_vectors = {
@@ -19,14 +19,14 @@ void gfsbox_test() {
     };
     std::string key_hex(32, '0');
     auto key = hex_to_key(key_hex);
-    AES aes(key);
+    ModularAES aes(key);
     for (auto tv : test_vectors) {
         std::string pt_hex, ct_hex;
         std::stringstream ss(tv);
         ss >> pt_hex >> ct_hex;
         auto pt = hex_to_block(pt_hex);
         block_t ct;
-        aes.encrypt(pt, ct);
+        ct = aes.encrypt(pt);
         auto ct_expected = block_to_hex(ct);
         assert(ct_expected == ct_hex);
     }
@@ -63,9 +63,9 @@ void keysbox_test() {
         std::stringstream ss(tv);
         ss >> key_hex >> ct_hex;
         auto key = hex_to_key(key_hex);
-        AES aes(key);
+        ModularAES aes(key);
         block_t ct;
-        aes.encrypt(pt, ct);
+        ct = aes.encrypt(pt);
         auto ct_expected = block_to_hex(ct);
         assert(ct_expected == ct_hex);
     }
@@ -204,14 +204,14 @@ void vartxt_test() {
     };
     std::string key_hex(32, '0');
     auto key = hex_to_key(key_hex);
-    AES aes(key);
+    ModularAES aes(key);
     for (auto tv : test_vectors) {
         std::string pt_hex, ct_hex;
         std::stringstream ss(tv);
         ss >> pt_hex >> ct_hex;
         auto pt = hex_to_block(pt_hex);
         block_t ct;
-        aes.encrypt(pt, ct);
+        ct = aes.encrypt(pt);
         auto ct_expected = block_to_hex(ct);
         assert(ct_expected == ct_hex);
     }
@@ -355,9 +355,9 @@ void varkey_test() {
         std::stringstream ss(tv);
         ss >> key_hex >> ct_hex;
         auto key = hex_to_key(key_hex);
-        AES aes(key);
+        ModularAES aes(key);
         block_t ct;
-        aes.encrypt(pt, ct);
+        ct = aes.encrypt(pt);
         auto ct_expected = block_to_hex(ct);
         assert(ct_expected == ct_hex);
     }

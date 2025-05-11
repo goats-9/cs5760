@@ -2,9 +2,10 @@
 
 #include <cassert>
 #include "aes.hpp"
+#include "oracle.hpp"
 #include "utils.hpp"
 
-namespace ModularAES {
+namespace modular_aes {
     void simple_swap(block_t&, block_t&);
-    bool yoyo_distinguisher_5rd(oracle_t&, block_t&, block_t&);
+    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t>&, block_t&, block_t&);
 }

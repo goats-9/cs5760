@@ -6,7 +6,7 @@
 #include "utils.hpp"
 #include "constants.hpp"
 
-namespace ModularAES {
+namespace modular_aes {
     byte_t gadd(byte_t a, byte_t b) {
         return a ^ b;
     }
@@ -42,23 +42,12 @@ namespace ModularAES {
         return result;
     }
 
-    word_t gmul(block_t a, word_t b) {
-        word_t result;
-        for (size_t i = 0; i < NR; ++i) {
-            result[i] = 0;
-            for (size_t j = 0; j < NC; ++j) {
-                result[i] = gadd(result[i], gmul(a[i][j], b[j]));
-            }
-        }
-        return result;
-    }
-
     word_t gmul(word_t a, block_t b) {
-        word_t result = {0};
+        word_t result;
         for (size_t i = 0; i < NC; ++i) {
             result[i] = 0;
             for (size_t j = 0; j < NR; ++j) {
-                result[i] ^= gmul(a[j], b[j][i]);
+                result[i] = gadd(result[i], gmul(a[j], b[j][i]));
             }
         }
         return result;
@@ -72,7 +61,7 @@ namespace ModularAES {
         return result;
     }
 
-    byte_t random_byte() { return static_cast<byte_t>(rng() % 256); }
+    byte_t random_byte() { return dist(rng); }
 
     word_t random_word() {
         word_t w;

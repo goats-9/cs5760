@@ -9,7 +9,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     add_executable(${TEST_NAME} ${TEST_SOURCE})
 
     # Link against the main library
-    target_link_libraries(${TEST_NAME} ${CMAKE_PROJECT_NAME}_LIB)
+    target_link_libraries(${TEST_NAME} ${CMAKE_PROJECT_NAME})
 
     # Add the test to CTest
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})

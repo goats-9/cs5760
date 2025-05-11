@@ -7,14 +7,13 @@
 #include <random>
 #include <vector>
 
-namespace ModularAES {
+namespace modular_aes {
     /* Constants */
     constexpr size_t NR = 4;
     constexpr size_t NC = 4;
     constexpr size_t NK_128 = 4;
     constexpr size_t NK_192 = 6;
     constexpr size_t NK_256 = 8;
-    inline std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
     /* Typedefs and structs */
     using byte_t = uint8_t;
@@ -23,7 +22,9 @@ namespace ModularAES {
     using aes_key_t = std::vector<word_t>;
     using aes_step_t = std::function<block_t(block_t, block_t, bool)>;
     using aes_key_schedule_t = std::function<std::vector<block_t>(aes_key_t)>;
-    using oracle_t = std::function<block_t(block_t, bool)>;
+
+    inline std::mt19937 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    inline std::uniform_int_distribution<byte_t> dist(0, 255);
 
     /* Galois field operators */
     constexpr byte_t MIN_POLY = 0x1b;   // Minimal polynomial of GF(2^8)
@@ -36,7 +37,6 @@ namespace ModularAES {
 
     // Multiplication in GF(2^8)
     byte_t gmul(byte_t a, byte_t b);
-    word_t gmul(block_t a, word_t b);
     word_t gmul(word_t a, block_t b);
     block_t gmul(block_t a, block_t b);
 

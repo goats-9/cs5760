@@ -1,8 +1,8 @@
 #include <cassert>
 #include "aes.hpp"
 
-namespace ModularAES {
-    void AES::encrypt(const block_t input, block_t& output, size_t num_rounds) {
+namespace modular_aes {
+    block_t ModularAES::encrypt(const block_t input, size_t num_rounds) {
         if (num_rounds == 0) {
             num_rounds = subkeys_.size() - 1;
         }
@@ -16,10 +16,10 @@ namespace ModularAES {
         }
         state = s_box_(state, subkeys_[num_rounds], true);
         state = shift_rows_(state, subkeys_[num_rounds], true);
-        output = add_round_key_(state, subkeys_[num_rounds], true);
+        return add_round_key_(state, subkeys_[num_rounds], true);
     }
 
-    void AES::decrypt(const block_t input, block_t& output, size_t num_rounds) {
+    block_t ModularAES::decrypt(const block_t input, size_t num_rounds) {
         if (num_rounds == 0) {
             num_rounds = subkeys_.size() - 1;
         }
@@ -33,6 +33,6 @@ namespace ModularAES {
         }
         state = shift_rows_(state, subkeys_[0], false);
         state = s_box_(state, subkeys_[0], false);
-        output = add_round_key_(state, subkeys_[0], false);
+        return add_round_key_(state, subkeys_[0], false);
     }
 }

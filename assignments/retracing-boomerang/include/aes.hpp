@@ -3,7 +3,7 @@
 #include "utils.hpp"
 #include "constants.hpp"
 
-namespace ModularAES {
+namespace modular_aes {
     inline aes_step_t add_round_key_ = [](block_t state, block_t subkey, bool dir) {
         (void)dir;
         return gadd(state, subkey);
@@ -29,11 +29,8 @@ namespace ModularAES {
     inline aes_step_t shift_rows_ = [] (block_t state, block_t subkey, bool dir) {
         (void)subkey;
         for (size_t i = 1; i < NR; ++i) {
-            if (dir) {
-                std::rotate(state[i].begin(), state[i].begin() + i, state[i].end());
-            } else {
-                std::rotate(state[i].rbegin(), state[i].rbegin() + i, state[i].rend());
-            }
+            int x = dir ? i : (NR - i);
+            std::rotate(state[i].begin(), state[i].begin() + x, state[i].end());
         }
         return state;
     };
@@ -74,21 +71,20 @@ namespace ModularAES {
         return keys;
     };
 
-    class AES {
+    class ModularAES {
     public:
         aes_key_t key_;
         aes_step_t s_box_, mix_columns_;
         std::vector<block_t> subkeys_;
     // public:
-        AES(aes_key_t key,
+        ModularAES(aes_key_t key,
             aes_step_t s_box_ = aes_s_box_,
             aes_step_t mix_columns_ = aes_mix_columns_,
             aes_key_schedule_t key_expansion_ = aes_key_expansion_
         ) : key_(key), s_box_(s_box_), mix_columns_(mix_columns_),
             subkeys_(key_expansion_(key)) {}
-        AES(AES&) = default;
 
-        void encrypt(const block_t, block_t&, size_t = 0);
-        void decrypt(const block_t, block_t&, size_t = 0);
+        block_t encrypt(const block_t, size_t = 0);
+        block_t decrypt(const block_t, size_t = 0);
     };
 }
