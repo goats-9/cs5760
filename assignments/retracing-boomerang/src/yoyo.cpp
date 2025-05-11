@@ -23,12 +23,10 @@ namespace modular_aes {
         }
     }
 
-    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t>& oracle, block_t& x0, block_t& x1) {
+    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t>& oracle, block_t& x0, block_t& x1, int _cnt1, int _cnt2) {
         int cnt1 = 0, cnt2 = 0, wrong_pair = 0, mxcnt = 0;
         block_t p0, p1, c0, c1;
-        int CNT1 = 1 << 14;
-        int CNT2 = 1 << 15;
-        while (cnt1 < CNT1) {
+        while (cnt1 < _cnt1) {
             cnt1++;
             p0 = random_block(), p1 = p0;
             for (size_t j = 0; j < 2; j++) {
@@ -38,7 +36,7 @@ namespace modular_aes {
             }
             x0 = p0, x1 = p1;
             cnt2 = 0, wrong_pair = 0;
-            while (cnt2 < CNT2 && !wrong_pair) {
+            while (cnt2 < _cnt2 && !wrong_pair) {
                 cnt2++;
                 p0 = shift_rows_(p0, {}, false);
                 p1 = shift_rows_(p1, {}, false);
@@ -60,7 +58,6 @@ namespace modular_aes {
                     }
                     if (cnt >= 2 && cnt < 4) {
                         if (mxcnt < cnt2) {
-                            std::cout << cnt1 << ' ' << cnt2 << ' ' << std::endl;
                             mxcnt = cnt2;
                         }
                         wrong_pair = 1;
@@ -70,7 +67,8 @@ namespace modular_aes {
                 simple_swap(p0, p1);
             }
             if (!wrong_pair) {
-                std::cout << cnt1 << ' ' << cnt2 << ' ' << std::endl;
+                x0 = shift_rows_(x0, {}, false);
+                x1 = shift_rows_(x1, {}, false);
                 return true;
             }
         }

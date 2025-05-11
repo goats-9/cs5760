@@ -7,9 +7,9 @@ namespace modular_aes {
     aes_key_t retracing_boomerang_attack(Oracle<block_t, block_t>& oracle) {
         // Create a GF(2^8) instance to use for solving the system of equations.
         gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
-        // Get a pair from the yoyo distinguisher
+        // Get a pair from the yoyo distinguisher, with changed thresholds
         block_t p0, p1, c0, c1;
-        yoyo_distinguisher_5rd(oracle, p0, p1);
+        yoyo_distinguisher_5rd(oracle, p0, p1, 1 << 14, 1 << 12);
         // Generate 2^10 + 10 friend pairs for this initial pair
         std::vector<std::pair<block_t, block_t>> friend_pairs;
         const size_t sz = 1034;
