@@ -11,7 +11,7 @@ void test_yoyo_pass(size_t runs = 10) {
     auto key = random_key(NK_128);
     AESOracle oracle(key);
     block_t p0, p1;
-    while (runs--) {
+    for (size_t _ = 0; _ < runs; ++_) {
         assert(yoyo_distinguisher_5rd(oracle, p0, p1));    
     }
 }

@@ -5,20 +5,14 @@
 namespace modular_aes {
     void simple_swap(block_t& a, block_t& b) {
         assert(a != b);
+        // Generate a mask between 1 and 14 determining which columns are to be
+        // swapped.
+        size_t mask = rng() % 14 + 1;
         for (size_t col = 0; col < NC; ++col) {
-            // Check if the columns are unequal
-            bool ok = false;
-            for (size_t j = 0; j < NR; ++j) {
-                if (a[j][col] != b[j][col]) {
-                    ok = true;
-                    break;
-                }
-            }
-            if (ok) {
+            if (mask >> col & 1) {
                 for (size_t j = 0; j < NR; ++j) {
                     std::swap(a[j][col], b[j][col]);
                 }
-                return;
             }
         }
     }

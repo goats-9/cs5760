@@ -3,7 +3,6 @@
 #include <cassert>
 #include "aes.hpp"
 #include "oracle.hpp"
-#include "utils.hpp"
 
 namespace modular_aes {
     void simple_swap(block_t&, block_t&);
