@@ -6,5 +6,5 @@
 
 namespace modular_aes {
     void simple_swap(block_t&, block_t&);
-    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t>&, block_t&, block_t&, int = 10000, int = 25000);
+    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t>&, block_t&, block_t&, int = 1 << 14, int = 1 << 16);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "utils.hpp"
+#include <map>
 
 namespace modular_aes {
     template<typename Result, typename Query>
@@ -25,14 +26,15 @@ namespace modular_aes {
         }
     };
     
-    class RandomAESOracle : public Oracle<block_t, block_t> {
-        ModularAES aes_;
+    class RandomOracle : public Oracle<block_t, block_t> {
+        ModularAES aes_ = ModularAES(random_key(NK_128));
+        size_t REPS = 3;
     public:
-        RandomAESOracle(aes_key_t key) : aes_(key) {}
-    
-        block_t encrypt(const block_t& input) override { 
+        RandomOracle() {}
+
+        block_t encrypt(const block_t& input) override {
             auto state = input;
-            for (size_t i = 0; i < 3; ++i) {
+            for (size_t i = 0; i < REPS; ++i) {
                 state = aes_.encrypt(state);
             }
             return state;
@@ -40,7 +42,7 @@ namespace modular_aes {
     
         block_t decrypt(const block_t& input) override {
             auto state = input;
-            for (size_t i = 0; i < 3; ++i) {
+            for (size_t i = 0; i < REPS; ++i) {
                 state = aes_.decrypt(state);
             }
             return state;

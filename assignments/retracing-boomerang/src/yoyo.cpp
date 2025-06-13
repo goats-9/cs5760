@@ -7,23 +7,31 @@ namespace modular_aes {
         assert(a != b);
         // Generate a mask between 1 and 14 determining which columns are to be
         // swapped.
-        size_t mask = rng() % 14 + 1;
         for (size_t col = 0; col < NC; ++col) {
-            if (mask >> col & 1) {
-                for (size_t j = 0; j < NR; ++j) {
-                    std::swap(a[j][col], b[j][col]);
+            bool ok = false;
+            for (size_t j = 0; j < NR; ++j) {
+                if (a[j][col] != b[j][col]) {
+                    ok = true;
+                    break;
                 }
             }
+            if (!ok) {
+                continue;
+            }
+            for (size_t j = 0; j < NR; ++j) {
+                std::swap(a[j][col], b[j][col]);
+            }
+            return;
         }
     }
 
     bool yoyo_distinguisher_5rd(Oracle<block_t, block_t>& oracle, block_t& x0, block_t& x1, int _cnt1, int _cnt2) {
-        int cnt1 = 0, cnt2 = 0, wrong_pair = 0, mxcnt = 0;
+        int cnt1 = 0, cnt2 = 0, wrong_pair = 0;
         block_t p0, p1, c0, c1;
         while (cnt1 < _cnt1) {
             cnt1++;
             p0 = random_block(), p1 = p0;
-            for (size_t j = 0; j < 2; j++) {
+            for (size_t j = 0; j < NR; j++) {
                 while (p1[j][0] == p0[j][0]) {
                     p1[j][0] = random_byte();
                 }
@@ -50,10 +58,7 @@ namespace modular_aes {
                     for (size_t j = 0; j < NR; ++j) {
                         cnt += p0[j][i] == p1[j][i];
                     }
-                    if (cnt >= 2 && cnt < 4) {
-                        if (mxcnt < cnt2) {
-                            mxcnt = cnt2;
-                        }
+                    if (cnt >= 2) {
                         wrong_pair = 1;
                         break;
                     }

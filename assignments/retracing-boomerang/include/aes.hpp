@@ -84,7 +84,7 @@ namespace modular_aes {
         ) : key_(key), s_box_(s_box_), mix_columns_(mix_columns_),
             subkeys_(key_expansion_(key)) {}
 
-        block_t encrypt(const block_t, size_t = 0);
-        block_t decrypt(const block_t, size_t = 0);
+        block_t encrypt(const block_t, size_t = 10);
+        block_t decrypt(const block_t, size_t = 10);
     };
 }

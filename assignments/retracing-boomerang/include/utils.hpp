@@ -28,7 +28,6 @@ namespace modular_aes {
 
     /* Galois field operators */
     constexpr byte_t MIN_POLY = 0x1b;   // Minimal polynomial of GF(2^8)
-    constexpr byte_t GEN = 0x02;        // Generator of GF(2^8)
 
     // Addition in GF(2^8)
     byte_t gadd(byte_t a, byte_t b);

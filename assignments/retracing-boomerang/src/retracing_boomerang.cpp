@@ -8,10 +8,10 @@ namespace modular_aes {
         gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
         // Get a pair from the yoyo distinguisher, with changed thresholds
         block_t p0, p1, c0, c1;
-        assert(yoyo_distinguisher_5rd(oracle, p0, p1, 1 << 14, 1 << 12));
+        assert(yoyo_distinguisher_5rd(oracle, p0, p1));
         // Generate 2^10 + 10 friend pairs for this initial pair
         std::vector<std::pair<block_t, block_t>> friend_pairs;
-        const size_t sz = 2048;
+        const size_t sz = 10 + (1 << 10);
         while (friend_pairs.size() < sz) {
             c0 = oracle.encrypt(p0);
             c1 = oracle.encrypt(p1);
@@ -48,7 +48,8 @@ namespace modular_aes {
                 }
             }
             // Perform gaussian elimination to solve the system
-            mzed_echelonize(rref[l], 0);
+            int r = mzed_echelonize(rref[l], 0);
+            std::cout << "l = " << l << ", rank = " << r << std::endl;
         }
         gf2e_free(gf);
         return {};

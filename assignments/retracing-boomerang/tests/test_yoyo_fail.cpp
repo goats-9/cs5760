@@ -6,16 +6,9 @@
 #include <iostream>
 using namespace modular_aes;
 
-void test_yoyo_fail(size_t runs = 10) {
-    auto key = random_key(NK_128);
-    RandomAESOracle oracle(key);
-    block_t p0, p1;
-    for (size_t _ = 0; _ < runs; ++_) {
-        assert(!yoyo_distinguisher_5rd(oracle, p0, p1));    
-    }
-}
-
 int main() {
-    test_yoyo_fail(1);
+    RandomOracle oracle;
+    block_t p0, p1;
+    assert(!yoyo_distinguisher_5rd(oracle, p0, p1));
     return 0;
 }
