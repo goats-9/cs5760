@@ -1,90 +1,122 @@
 #pragma once
 
-#include "utils.hpp"
+#include <cassert>
+#include <iostream>
 #include "constants.hpp"
 
 namespace modular_aes {
-    inline aes_step_t add_round_key_ = [](block_t state, block_t subkey, bool dir) {
+    inline aes_step_t add_round_key_ = [] (mzed_t *state, mzed_t *subkey, bool dir) {
         (void)dir;
-        return gadd(state, subkey);
+        mzed_add(state, state, subkey);
     };
 
-    inline aes_step_t aes_s_box_ = [](block_t state, block_t subkey, bool dir) {
+    inline aes_step_t s_box_ = [] (mzed_t *state, mzed_t *subkey, bool dir) {
         (void)subkey;
         auto& s = dir ? S : Si;
-        for (auto &w : state) {
-            for (auto &b : w) {
-                b = s[b];
+        for (rci_t i = 0; i < state->nrows; ++i) {
+            for (rci_t j = 0; j < state->ncols; ++j) {
+                word w = mzed_read_elem(state, i, j);
+                mzed_write_elem(state, i, j, s[w]);
             }
         }
-        return state;
     };
 
-    inline aes_step_t aes_mix_columns_ = [] (block_t state, block_t subkey, bool dir) {
+    inline aes_step_t mix_columns_ = [] (mzed_t *state, mzed_t *subkey, bool dir) {
         (void)subkey;
         (void)dir;
-        return gmul(dir ? MC : IMC, state);
+        assert(state->nrows == NR && state->ncols == NC);
+        mzed_mul(state, dir ? MC : MCi, state);
     };
 
-    inline aes_step_t shift_rows_ = [] (block_t state, block_t subkey, bool dir) {
+    inline aes_step_t shift_rows_ = [] (mzed_t *state, mzed_t *subkey, bool dir) {
         (void)subkey;
-        for (size_t i = 1; i < NR; ++i) {
-            int x = dir ? i : (NR - i);
-            std::rotate(state[i].begin(), state[i].begin() + x, state[i].end());
-        }
-        return state;
-    };
-
-    inline auto aes_sub_word = [] (word_t w) {
-        for (auto &ww : w) {
-            ww = S[ww];
-        }
-        return w;
-    };
-
-    inline auto aes_rot_word = [] (word_t w) {
-        std::rotate(w.begin(), w.begin() + 1, w.end());
-        return w;
-    };
-
-    inline aes_key_schedule_t aes_key_expansion_ = [] (aes_key_t key) {
-        int NK = key.size();
-        size_t rounds = NK + 6;
-        std::vector<block_t> keys(rounds + 1);
-        for (size_t i = NK; i < 4 * (rounds + 1); ++i) {
-            word_t temp = key[i - 1];
-            if (i % NK == 0) {
-                temp = aes_sub_word(aes_rot_word(temp));
-                temp[0] ^= Rcon[i / NK];
-            } else if (NK > 6 && i % NK == 4) {
-                temp = aes_sub_word(temp);
+        rci_t nr = state->nrows, nc = state->ncols;
+        mzed_t *tmp = mzed_init(gf, nr, nc);
+        int x = dir ? 1 : -1;
+        for (rci_t i = 0; i < nr; ++i) {
+            for (rci_t j = 0; j < nc; ++j) {
+                rci_t jj = (j + i * x) % nc;
+                if (jj < 0) jj += nc; // Ensure jj is non-negative
+                word w = mzed_read_elem(state, i, jj);
+                mzed_write_elem(tmp, i, j, w);
             }
-            key.push_back(gadd(key[i - NK], temp));
         }
+        state = mzed_copy(state, tmp);
+        mzed_free(tmp);
+    };
+
+    inline aes_key_schedule_t key_expansion_ = [] (mzed_t *key) {
+        size_t nk = key->ncols;
+        // Validate key size
+        assert(nk == NK_128 || nk == NK_192 || nk == NK_256); // Valid key sizes for AES
+        assert(key->nrows == NR);
+        // Compute number of AES rounds
+        size_t rounds = nk + 6;
+        // Initialize keywords for computing the key schedule
+        mzed_t *keywords = mzed_init(gf, NC * (rounds + 1), NR);
+        // Copy the key into the first part of the keywords
+        for (size_t i = 0; i < nk; ++i) {
+            for (size_t j = 0; j < NR; ++j) {
+                mzed_write_elem(keywords, i, j, mzed_read_elem(key, j, i));
+            }
+        }
+        // Helper routine to rotate a word
+        auto rot_word = [&] (mzed_t *w) {
+            mzed_t *tmp = mzed_init(gf, 1, NR);
+            for (size_t i = 0; i < NR; ++i) {
+                mzed_write_elem(tmp, 0, i, mzed_read_elem(w, 0, (i + 1) % NR));
+            }
+            mzed_copy(w, tmp);
+            mzed_free(tmp);
+        };
+        // Now perform the key schedule
+        mzed_t *temp = mzed_init(gf, 1, NR);
+        for (size_t i = nk; i < NC * (rounds + 1); ++i) {
+            mzed_copy_row(temp, 0, keywords, i - 1);
+            if (i % nk == 0) {
+                rot_word(temp);
+                s_box_(temp, NULL, true);
+                mzed_write_elem(temp, 0, 0,
+                    mzed_read_elem(temp, 0, 0) ^ Rcon[i / nk - 1]);
+            } else if (nk > 6 && i % nk == 4) {
+                s_box_(temp, NULL, true);
+            }
+            mzed_add_row(temp, 0, keywords, i - nk, 0);
+            mzed_copy_row(keywords, i, temp, 0);
+        }
+        mzed_free(temp);
+        std::vector<mzed_t *> keys(rounds + 1, mzed_init(gf, NR, NC));
+        // Now extract the keys from the keywords
         for (size_t i = 0; i <= rounds; ++i) {
             for (int j = 0; j < 4; ++j) {
                 for (int k = 0; k < 4; ++k) {
-                    keys[i][k][j] = key[4 * i + j][k];
+                    mzed_write_elem(keys[i], k, j,
+                        mzed_read_elem(keywords, 4 * i + j, k));
                 }
             }
         }
         return keys;
     };
 
-    class ModularAES {
-    public:
-        aes_key_t key_;
-        aes_step_t s_box_, mix_columns_;
-        std::vector<block_t> subkeys_;
-    // public:
-        ModularAES(aes_key_t key,
-            aes_step_t s_box_ = aes_s_box_,
-            aes_step_t mix_columns_ = aes_mix_columns_,
-            aes_key_schedule_t key_expansion_ = aes_key_expansion_
-        ) : key_(key), s_box_(s_box_), mix_columns_(mix_columns_),
-            subkeys_(key_expansion_(key)) {}
 
-        block_t encrypt(const block_t, size_t = 10);
-        block_t decrypt(const block_t, size_t = 10);
+    class ModularAES {
+        mzed_t *key;
+        aes_step_t s_box, mix_columns;
+        std::vector<mzed_t *> subkeys;
+    public:
+        ModularAES(mzed_t *key = NULL,
+            aes_step_t s_box = s_box_,
+            aes_step_t mix_columns = mix_columns_,
+            aes_key_schedule_t key_expansion = key_expansion_
+        ) : key(key), s_box(s_box_), mix_columns(mix_columns_) {
+            if (!key) {
+                key = mzed_init(gf, NR, NC);
+                mzed_custom_randomize(key);
+            }
+            subkeys = key_expansion(key);
+        }
+
+        void encrypt(mzed_t *, size_t = 0);
+        void decrypt(mzed_t *, size_t = 0);
     };
 }

@@ -1,9 +1,12 @@
 #pragma once
+
 #include <m4rie/m4rie.h>
-#include <m4ri/m4ri.h>
 #include "aes.hpp"
 #include "oracle.hpp"
+#include "yoyo.hpp"
 
 namespace modular_aes {
-    aes_key_t retracing_boomerang_attack(Oracle<block_t, block_t>&);   
+    mzed_t *retracing_boomerang_attack(Oracle<mzed_t *, mzed_t *>& oracle);
+    // mzed_t *retracing_boomerang_attack_secret(Oracle<mzed_t *, mzed_t *>&);   
+    // mzed_t *retracing_boomerang_attack_secret_yoyo(Oracle<mzed_t *, mzed_t *>& oracle);
 }

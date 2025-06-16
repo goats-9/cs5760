@@ -1,11 +1,34 @@
-#include <string>
-#include <iostream>
-#include <sstream>
 #include <cassert>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <string>
 #include "aes.hpp"
-#include "utils.hpp"
 
 using namespace modular_aes;
+
+/* Utility functions to convert between hex strings and mzed_t */
+
+mzed_t *hex_to_block(const std::string &hex) {
+    size_t sz = hex.size();
+    assert(sz % (2 * NR) == 0);
+    int nc = sz / (2 * NR);
+    mzed_t *block = mzed_init(gf, NR, nc);
+    for (size_t i = 0; i < NR * nc; i++) {
+        word w = static_cast<word>(std::stoul(hex.substr(2 * i, 2), nullptr, 16));
+        mzed_write_elem(block, i % 4, i / 4, w);
+    }
+    return block;
+}
+
+std::string block_to_hex(mzed_t *block) {
+    std::stringstream ss;
+    ss << std::hex << std::setw(2) << std::setfill('0');
+    for (size_t i = 0; i < 16; ++i) {
+        ss << mzed_read_elem(block, i % 4, i / 4);
+    }
+    return ss.str();
+}
 
 void gfsbox_test() {
     std::vector<std::string> test_vectors = {
@@ -18,16 +41,17 @@ void gfsbox_test() {
         "58c8e00b2631686d54eab84b91f0aca1 08a4e2efec8a8e3312ca7460b9040bbf",   
     };
     std::string key_hex(32, '0');
-    auto key = hex_to_key(key_hex);
+    auto key = hex_to_block(key_hex);
     ModularAES aes(key);
     for (auto tv : test_vectors) {
         std::string pt_hex, ct_hex;
         std::stringstream ss(tv);
         ss >> pt_hex >> ct_hex;
         auto pt = hex_to_block(pt_hex);
-        block_t ct;
-        ct = aes.encrypt(pt);
-        auto ct_expected = block_to_hex(ct);
+        aes.encrypt(pt);
+        auto ct_expected = block_to_hex(pt);
+        mzed_free(pt);
+        std::cerr << ct_expected << " " << ct_hex << std::endl;
         assert(ct_expected == ct_hex);
     }
 };
@@ -62,11 +86,11 @@ void keysbox_test() {
         std::string key_hex, ct_hex;
         std::stringstream ss(tv);
         ss >> key_hex >> ct_hex;
-        auto key = hex_to_key(key_hex);
+        auto key = hex_to_block(key_hex);
         ModularAES aes(key);
-        block_t ct;
-        ct = aes.encrypt(pt);
-        auto ct_expected = block_to_hex(ct);
+        aes.encrypt(pt);
+        auto ct_expected = block_to_hex(pt);
+        mzed_free(pt);
         assert(ct_expected == ct_hex);
     }
 }
@@ -203,16 +227,16 @@ void vartxt_test() {
         "ffffffffffffffffffffffffffffffff 3f5b8cc9ea855a0afa7347d23e8d664e",
     };
     std::string key_hex(32, '0');
-    auto key = hex_to_key(key_hex);
+    auto key = hex_to_block(key_hex);
     ModularAES aes(key);
     for (auto tv : test_vectors) {
         std::string pt_hex, ct_hex;
         std::stringstream ss(tv);
         ss >> pt_hex >> ct_hex;
         auto pt = hex_to_block(pt_hex);
-        block_t ct;
-        ct = aes.encrypt(pt);
-        auto ct_expected = block_to_hex(ct);
+        aes.encrypt(pt);
+        auto ct_expected = block_to_hex(pt);
+        mzed_free(pt);
         assert(ct_expected == ct_hex);
     }
 }
@@ -354,11 +378,11 @@ void varkey_test() {
         std::string key_hex, ct_hex;
         std::stringstream ss(tv);
         ss >> key_hex >> ct_hex;
-        auto key = hex_to_key(key_hex);
+        auto key = hex_to_block(key_hex);
         ModularAES aes(key);
-        block_t ct;
-        ct = aes.encrypt(pt);
-        auto ct_expected = block_to_hex(ct);
+        aes.encrypt(pt);
+        auto ct_expected = block_to_hex(pt);
+        mzed_free(pt);
         assert(ct_expected == ct_hex);
     }
 }

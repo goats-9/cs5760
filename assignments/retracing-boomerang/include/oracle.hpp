@@ -1,49 +1,52 @@
 #pragma once
-#include "utils.hpp"
+
 #include <map>
+#include "aes.hpp"
 
 namespace modular_aes {
     template<typename Result, typename Query>
     class Oracle {
     public:
-        virtual Result encrypt(const Query&) = 0;
-        virtual Result decrypt(const Query&) = 0;
+        virtual Result encrypt(Query) = 0;
+        virtual Result decrypt(Query) = 0;
     };
 
-    class AESOracle : public Oracle<block_t, block_t> {
-        ModularAES aes_;
+    class AESOracle : public Oracle<mzed_t *, mzed_t *> {
+        ModularAES aes;
     public:
-        AESOracle(aes_key_t key) : aes_(key) {}
-    
-        block_t encrypt(const block_t& input) override {
-            auto state = input;
-            return aes_.encrypt(state, 5);
+        AESOracle(mzed_t *key = NULL) : aes(key) {}
+
+        mzed_t *encrypt(mzed_t *input) override {
+            mzed_t *state = mzed_copy(NULL, input);
+            aes.encrypt(state, 5);
+            return state;
         }
-    
-        block_t decrypt(const block_t& input) override {
-            auto state = input;
-            return aes_.decrypt(state, 5);
+
+        mzed_t *decrypt(mzed_t *input) override {
+            mzed_t *state = mzed_copy(NULL, input);
+            aes.decrypt(state, 5);
+            return state;
         }
     };
-    
-    class RandomOracle : public Oracle<block_t, block_t> {
-        ModularAES aes_ = ModularAES(random_key(NK_128));
+
+    class RandomOracle : public Oracle<mzed_t *, mzed_t *> {
+        ModularAES aes = ModularAES();
         size_t REPS = 3;
     public:
         RandomOracle() {}
 
-        block_t encrypt(const block_t& input) override {
-            auto state = input;
+        mzed_t *encrypt(mzed_t *input) override {
+            mzed_t *state = mzed_copy(NULL, input);
             for (size_t i = 0; i < REPS; ++i) {
-                state = aes_.encrypt(state);
+                aes.encrypt(state, 5);
             }
             return state;
         }
-    
-        block_t decrypt(const block_t& input) override {
-            auto state = input;
+
+        mzed_t *decrypt(mzed_t *input) override {
+            mzed_t *state = mzed_copy(NULL, input);
             for (size_t i = 0; i < REPS; ++i) {
-                state = aes_.decrypt(state);
+                aes.decrypt(state, 5);
             }
             return state;
         }
