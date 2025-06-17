@@ -1,16 +1,11 @@
 #include <cassert>
 #include "retracing_boomerang.hpp"
-using namespace modular_aes;
 
-void test_retracing_boomerang(size_t runs = 10) {
-    auto key = random_key(NK_128);
-    AESOracle oracle(key);
-    for (size_t _ = 0; _ < runs; ++_) {
-        retracing_boomerang_attack(oracle);
-    }
-}
+using namespace boomerang;
 
 int main() {
-    test_retracing_boomerang(1);
+    AESOracle oracle;
+    auto key = retracing_boomerang_attack(oracle);
+    assert(oracle.check(key));
     return 0;
 }

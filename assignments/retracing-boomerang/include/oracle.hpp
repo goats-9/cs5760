@@ -1,51 +1,76 @@
 #pragma once
-#include "utils.hpp"
-#include <map>
 
-namespace modular_aes {
-    template<typename Result, typename Query>
+#include "aes.hpp"
+
+namespace boomerang {
+    template<typename Result, typename Query, typename Answer>
     class Oracle {
     public:
-        virtual Result encrypt(const Query&) = 0;
-        virtual Result decrypt(const Query&) = 0;
+        virtual Result encrypt(const Query) = 0;
+        virtual Result decrypt(const Query) = 0;
+        virtual bool check(const Answer) = 0;
     };
 
-    class AESOracle : public Oracle<block_t, block_t> {
-        ModularAES aes_;
+    class AESOracle : public Oracle<block_t, block_t, aes_key_t> {
+        AES aes = AES(AES_128);
+        aes_key_t aes_key = random_key(AES_128);
     public:
-        AESOracle(aes_key_t key) : aes_(key) {}
+        AESOracle() {}
     
-        block_t encrypt(const block_t& input) override {
+        block_t encrypt(const block_t input) override {
             auto state = input;
-            return aes_.encrypt(state, 5);
+            return aes.encrypt(aes_key, state, 5);
         }
     
-        block_t decrypt(const block_t& input) override {
+        block_t decrypt(const block_t input) override {
             auto state = input;
-            return aes_.decrypt(state, 5);
+            return aes.decrypt(aes_key, state, 5);
+        }
+
+        bool check(const aes_key_t key) override {
+            for (auto w : aes_key) {
+                print_word(w);
+            }
+            std::cout << std::endl;
+            for (auto w : key) {
+                print_word(w);
+            }
+            return key == aes_key;
         }
     };
     
-    class RandomOracle : public Oracle<block_t, block_t> {
-        ModularAES aes_ = ModularAES(random_key(NK_128));
+    class RandomOracle : public Oracle<block_t, block_t, aes_key_t> {
+        AES aes = AES(AES_128);
+        aes_key_t aes_key = random_key(AES_128);
         size_t REPS = 3;
     public:
         RandomOracle() {}
 
-        block_t encrypt(const block_t& input) override {
+        block_t encrypt(const block_t input) override {
             auto state = input;
             for (size_t i = 0; i < REPS; ++i) {
-                state = aes_.encrypt(state);
+                state = aes.encrypt(aes_key, state);
             }
             return state;
         }
     
-        block_t decrypt(const block_t& input) override {
+        block_t decrypt(const block_t input) override {
             auto state = input;
             for (size_t i = 0; i < REPS; ++i) {
-                state = aes_.decrypt(state);
+                state = aes.decrypt(aes_key, state);
             }
             return state;
+        }
+
+        bool check(const aes_key_t key) override {
+            for (auto w : aes_key) {
+                print_word(w);
+            }
+            std::cout << std::endl;
+            for (auto w : key) {
+                print_word(w);
+            }
+            return key == aes_key;
         }
     };
 }

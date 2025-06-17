@@ -1,10 +1,7 @@
-#include "aes.hpp"
 #include "oracle.hpp"
 #include "yoyo.hpp"
-#include <cassert>
-#include <iomanip>
-#include <iostream>
-using namespace modular_aes;
+
+using namespace boomerang;
 
 int main() {
     RandomOracle oracle;

@@ -1,12 +1,6 @@
-#include <cassert>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <string>
 #include "utils.hpp"
-#include "constants.hpp"
 
-namespace modular_aes {
+namespace boomerang {
     byte_t gadd(byte_t a, byte_t b) {
         return a ^ b;
     }
@@ -61,7 +55,25 @@ namespace modular_aes {
         return result;
     }
 
-    byte_t random_byte() { return dist(rng); }
+    byte_t gexp(byte_t a, size_t n) {
+        byte_t res = 1;
+        for (; n; n >>= 1, a = gmul(a, a)) {
+            if (n & 1) {
+                res = gmul(res, a);
+            }
+        }
+        return res;
+    }
+
+    byte_t ginv(byte_t a) {
+        return gexp(a, 0xFF - 1);
+    }
+
+    byte_t random_byte() {
+        byte_t out;
+        gnutls_rnd(GNUTLS_RND_RANDOM, &out, sizeof(out));
+        return out;
+    }
 
     word_t random_word() {
         word_t w;
@@ -85,6 +97,21 @@ namespace modular_aes {
             w = random_word();
         }
         return k;
+    }
+
+    word_t shift_row(word_t word, int off) {
+        off %= NC;
+        if (off < 0) off += NC;
+        std::rotate(word.begin(), word.begin() + off, word.end());
+        return word;
+    }
+
+    block_t shift_rows(block_t state, bool inv) {
+        for (size_t i = 1; i < NR; ++i) {
+            int x = inv ? (NR - i) : i;
+            state[i] = shift_row(state[i], x);
+        }
+        return state;
     }
 
     void print_word(word_t &w) {
