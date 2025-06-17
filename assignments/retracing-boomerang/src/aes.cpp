@@ -1,4 +1,3 @@
-#include <cassert>
 #include "aes.hpp"
 
 namespace boomerang {

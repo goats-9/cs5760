@@ -1,3 +1,4 @@
+#include <cassert>
 #include "oracle.hpp"
 #include "yoyo.hpp"
 

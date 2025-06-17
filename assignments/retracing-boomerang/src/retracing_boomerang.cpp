@@ -1,5 +1,4 @@
 #include <iostream>
-#include "yoyo.hpp"
 #include "retracing_boomerang.hpp"
 
 namespace boomerang {
