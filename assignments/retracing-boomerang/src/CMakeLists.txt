@@ -25,3 +25,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME} ${M4RIE_LIBRARIES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GNUTLS_INCLUDE_DIR})
 target_link_libraries(${CMAKE_PROJECT_NAME} ${GNUTLS_LIBRARIES})
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${GNUTLS_DEFINITIONS})

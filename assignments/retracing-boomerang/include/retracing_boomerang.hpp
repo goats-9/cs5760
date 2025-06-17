@@ -1,12 +1,13 @@
 #pragma once
 
+#include <unordered_map>
 #include <m4rie/m4rie.h>
-#include "aes.hpp"
+#include <m4ri/m4ri.h>
 #include "oracle.hpp"
 #include "yoyo.hpp"
 
-namespace modular_aes {
-    mzed_t *retracing_boomerang_attack(Oracle<mzed_t *, mzed_t *>& oracle);
-    // mzed_t *retracing_boomerang_attack_secret(Oracle<mzed_t *, mzed_t *>&);   
-    // mzed_t *retracing_boomerang_attack_secret_yoyo(Oracle<mzed_t *, mzed_t *>& oracle);
+namespace boomerang {
+    aes_key_t retracing_boomerang_attack(Oracle<block_t, block_t, aes_key_t>&);   
+    aes_key_t retracing_boomerang_attack_secret(Oracle<block_t, block_t, aes_key_t>&);
+    aes_key_t retracing_boomerang_attack_secret_yoyo(Oracle<block_t, block_t, aes_key_t>&);
 }
