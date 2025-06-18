@@ -20,7 +20,7 @@ namespace boomerang {
     };
 
     std::vector<block_t> AES::key_expansion(aes_key_t key) {
-        int NK = key.size();
+        size_t NK = key.size();
         size_t rounds = NK + 6;
         std::vector<block_t> keys(rounds + 1);
         auto sub_word = [&] (word_t w) {
@@ -37,7 +37,7 @@ namespace boomerang {
             word_t temp = key[i - 1];
             if (i % NK == 0) {
                 temp = sub_word(rot_word(temp));
-                temp[0] ^= Rcon[i / NK];
+                temp[0] ^= Rcon[i / NK - 1];
             } else if (NK > 6 && i % NK == 4) {
                 temp = sub_word(temp);
             }
@@ -87,7 +87,7 @@ namespace boomerang {
         assert(num_rounds <= max_rounds && num_rounds > 0);
         auto subkeys = key_expansion(key);
         block_t state = add_round_key(input, subkeys[num_rounds]);
-        for (size_t i = num_rounds - 1; i; --i) {
+        for (size_t i = num_rounds - 1; i > 0; --i) {
             state = shift_rows(state, true);
             state = sub_bytes(state, true);
             state = add_round_key(state, subkeys[i]);

@@ -16,7 +16,7 @@ void unit_test(std::string key_hex, std::string pt_hex, std::string ct_hex) {
     assert(ct_expected == ct_hex);
     auto ct = hex_to_block(ct_hex);
     auto pt_res = aes.decrypt(key, ct);
-    auto pt_expected = block_to_hex(pt);
+    auto pt_expected = block_to_hex(pt_res);
     assert(pt_expected == pt_hex);
 }
 
@@ -353,6 +353,7 @@ void varkey_test() {
 }
 
 int main() {
+    unit_test("2b7e151628aed2a6abf7158809cf4f3c", "3243f6a8885a308d313198a2e0370734", "3925841d02dc09fbdc118597196a0b32");
     gfsbox_test();
     keysbox_test();
     vartxt_test();

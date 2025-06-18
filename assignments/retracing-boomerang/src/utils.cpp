@@ -22,18 +22,8 @@ namespace boomerang {
     }
 
     byte_t gmul(byte_t a, byte_t b) {
-        byte_t result = 0;
-        for (; b; b >>= 1) {
-            if (b & 1) {
-                result ^= a;
-            } 
-            if (a & 0x80) {
-                a = (a << 1) ^ MIN_POLY;
-            } else {
-                a <<= 1;
-            }
-        }
-        return result;
+        if (a && b) return Alogtable[(Logtable[a] + Logtable[b]) % 255];
+        return 0;
     }
 
     word_t gmul(word_t a, block_t b) {
@@ -41,37 +31,27 @@ namespace boomerang {
         for (size_t i = 0; i < NC; ++i) {
             result[i] = 0;
             for (size_t j = 0; j < NR; ++j) {
-                result[i] = gadd(result[i], gmul(a[j], b[j][i]));
+                result[i] ^= gmul(a[j], b[j][i]);
             }
         }
         return result;
     }
 
     block_t gmul(block_t a, block_t b) {
-        block_t result = {0};
+        block_t result;
         for (size_t i = 0; i < NR; ++i) {
             result[i] = gmul(a[i], b);
         }
         return result;
     }
 
-    byte_t gexp(byte_t a, size_t n) {
-        byte_t res = 1;
-        for (; n; n >>= 1, a = gmul(a, a)) {
-            if (n & 1) {
-                res = gmul(res, a);
-            }
-        }
-        return res;
-    }
-
     byte_t ginv(byte_t a) {
-        return gexp(a, 0xFF - 1);
+        return Alogtable[(255 - Logtable[a]) % 255];
     }
 
     byte_t random_byte() {
         byte_t out;
-        gnutls_rnd(GNUTLS_RND_RANDOM, &out, sizeof(out));
+        gnutls_rnd(GNUTLS_RND_KEY, &out, sizeof(out));
         return out;
     }
 
@@ -108,7 +88,7 @@ namespace boomerang {
 
     block_t shift_rows(block_t state, bool inv) {
         for (size_t i = 1; i < NR; ++i) {
-            int x = inv ? (NR - i) : i;
+            int x = inv ? -i : i;
             state[i] = shift_row(state[i], x);
         }
         return state;
@@ -147,8 +127,8 @@ namespace boomerang {
         aes_key_t key(n / 8);
         int p = 0;
         for (auto& k : key) {
-            for (size_t i = 0; i < NC; ++i) {
-                k[i] = static_cast<byte_t>(std::strtoul(s.substr(p, 2).c_str(), nullptr, 16));
+            for (size_t i = 0; i < NR; ++i) {
+                k[i] = std::stoul(s.substr(p, 2).c_str(), nullptr, 16);
                 p += 2;
             }
         }
