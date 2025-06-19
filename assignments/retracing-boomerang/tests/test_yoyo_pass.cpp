@@ -6,6 +6,8 @@ using namespace boomerang;
 int main() {
     AESOracle oracle;
     block_t p0, p1;
-    assert(yoyo_distinguisher_5rd(oracle, p0, p1));    
+    for (size_t i = 0; i < NC; ++i) {
+        assert(yoyo_distinguisher_5rd(oracle, i, p0, p1));    
+    }
     return 0;
 }

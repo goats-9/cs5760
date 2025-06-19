@@ -176,26 +176,91 @@ namespace boomerang {
         return key;
     }
 
+    aes_key_t retracing_boomerang_attack_secret(Oracle<block_t, block_t, aes_key_t>& oracle) {
+        const size_t sz = 1 << 8;
+        const size_t fsz = 1 << 11;
+        // Create a GF(2^8) instance to use for solving the system of equations.
+        gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
+        aes_key_t key(4);
+        block_t p0, p1, f0, f1;
+        // Attack each column
+        for (size_t c = 0; c < NC; c++) {
+            // Generate sz chosen plaintext pairs with nonzero difference in the
+            // c-th inverse shifted column.
+            for (size_t i = 0; i < sz; ++i) {
+                p0 = random_block(), p1 = p0;
+                for (size_t j = 0; j < NR; ++j) {
+                    while (p1[j][(c + j) % NC] == p0[j][(c + j) % NC]) {
+                        p1[j][(c + j) % NC] = random_byte();
+                    }
+                }
+                mzed_t *a[4];
+                for (size_t l = 0; l < 4; l++) {
+                    a[l] = mzed_init(gf, fsz, 1024);
+                }
+                // Generate friend pairs
+                for (size_t j = 0; j < fsz; j++) {
+                    f0 = p0, f1 = p1;
+                    for (size_t ii = 0; ii < NR; ++ii) {
+                        for (size_t jj = 0; jj < NC; ++jj) {
+                            if ((ii + c) % NC == jj) continue;
+                            f0[ii][jj] = random_byte();
+                            f1[ii][jj] = f0[ii][jj];
+                        }
+                    }
+                    f0 = oracle.encrypt(f0);
+                    f1 = oracle.encrypt(f1);
+                    f0 = shift_rows(f0, true);
+                    f1 = shift_rows(f1, true);
+                    simple_swap(f0, f1);
+                    f0 = shift_rows(f0);
+                    f1 = shift_rows(f1);
+                    f0 = oracle.decrypt(f0);
+                    f1 = oracle.decrypt(f1);
+                    // Create the system of equations
+                    for (size_t l = 0; l < 4; l++) {
+                        for (size_t jj = 0; jj < NR; jj++) {
+                            // Get the j-th byte of the c-th inverse shifted column
+                            auto m0 = f0[jj][(c + jj) % NC];
+                            auto m1 = f1[jj][(c + jj) % NC];
+                            // Attach coefficients
+                            mzed_add_elem(a[l], j, 4 * m0 + jj, MC[l][jj]);
+                            mzed_add_elem(a[l], j, 4 * m1 + jj, MC[l][jj]);
+                        }
+                    }
+                }
+                for (size_t l = 0; l < 4; l++) {
+                    // Solve the system of equations
+                    auto rank = mzed_echelonize(a[l], 0);
+                    std::cerr << "i = " << i << ", c = " << c << ", l = " << l << ", rank = " << rank << std::endl;
+                    mzed_free(a[l]);
+                }
+            }
+        }
+        gf2e_free(gf);
+        return {};
+    }
+
     aes_key_t retracing_boomerang_attack_secret_yoyo(Oracle<block_t, block_t, aes_key_t>& oracle) {
         const size_t sz = 10 + (1 << 10);
         // Create a GF(2^8) instance to use for solving the system of equations.
         gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
-        // Get a pair from the yoyo distinguisher
-        block_t p0, p1;
-        assert(yoyo_distinguisher_5rd(oracle, p0, p1));
         aes_key_t key(4);
+        block_t p0, p1, f0, f1;
         // Attack each column
         for (size_t c = 0; c < NC; c++) {
+            // Get a pair from the yoyo distinguisher
+            while(!yoyo_distinguisher_5rd(oracle, c, p0, p1));
             // Generate 2^10 + 10 friend pairs
             std::vector<std::pair<block_t, block_t>> friend_pairs;
             for (size_t i = 0; i < sz; ++i) {
-                auto f0 = p0, f1 = p1;
+                f0 = p0, f1 = p1;
                 // Randomize all except the c-th inverse shifted column
                 for (size_t ii = 0; ii < NR; ++ii) {
                     for (size_t jj = 0; jj < NC; ++jj) {
                         if ((ii + c) % NC == jj) continue;
                         f0[ii][jj] = random_byte();
-                        f1[ii][jj] = f0[ii][jj] ^ p0[ii][jj] ^ p1[ii][jj];
+                        f1[ii][jj] = f0[ii][jj];
                     }
                 }
                 // Perform the yoyo and store the resulting plaintexts
@@ -213,19 +278,15 @@ namespace boomerang {
             // Assume Z[l][c] = 0 and create a set of equations.
             for (size_t l = 0; l < NR; l++) {
                 mzed_t *a = mzed_init(gf, sz, 1024);
-                for (auto [f0, f1] : friend_pairs) {
-                    print_block(f0);
-                    std::cout << std::endl;
-                    print_block(f1);
-                    std::cout << std::endl;
-                    std::cout << std::endl;
-                    for (size_t i = 0; i < NR; ++i) {
-                        // Get the i-th byte of the c-th inverse shifted column
-                        auto m0 = f0[i][(c + i) % NC];
-                        auto m1 = f1[i][(c + i) % NC];
+                for (size_t r = 0; r < sz; ++r) {
+                    auto [f0, f1] = friend_pairs[r];
+                    for (size_t j = 0; j < NR; ++j) {
+                        // Get the j-th byte of the c-th inverse shifted column
+                        auto m0 = f0[j][(c + j) % NC];
+                        auto m1 = f1[j][(c + j) % NC];
                         // Attach coefficients
-                        mzed_add_elem(a, i, 4 * m0 + l, MC[l][i]);
-                        mzed_add_elem(a, i, 4 * m1 + l, MC[l][i]);
+                        mzed_add_elem(a, r, 4 * m0 + j, MC[l][j]);
+                        mzed_add_elem(a, r, 4 * m1 + j, MC[l][j]);
                     }
                 }
                 // Solve the system of equations

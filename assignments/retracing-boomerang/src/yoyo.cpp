@@ -26,22 +26,21 @@ namespace boomerang {
         }
     }
 
-    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t, aes_key_t>& oracle, block_t& x0, block_t& x1) {
-        int cnt1 = 0, cnt2 = 0, wrong_pair = 0, datacnt = 0;
+    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t, aes_key_t>& oracle, size_t col, block_t& x0, block_t& x1) {
+        int cnt1 = 0, cnt2 = 0, wrong_pair = 0;
         block_t p0, p1, c0, c1;
         while (cnt1 < 16384) {
             cnt1++;
             p0 = random_block(), p1 = p0;
             for (size_t j = 0; j < NR; j++) {
-                while (p1[j][0] == p0[j][0]) {
-                    p1[j][0] = random_byte();
+                while (p1[j][col] == p0[j][col]) {
+                    p1[j][col] = random_byte();
                 }
             }
             x0 = p0, x1 = p1;
             cnt2 = 0, wrong_pair = 0;
             while (cnt2 < 65536 && !wrong_pair) {
                 cnt2++;
-                datacnt += 2;
                 p0 = shift_rows(p0, true);
                 p1 = shift_rows(p1, true);
                 c0 = oracle.encrypt(p0);
