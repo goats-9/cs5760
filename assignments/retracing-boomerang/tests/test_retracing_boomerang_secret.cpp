@@ -5,7 +5,7 @@ using namespace boomerang;
 
 int main() {
     AESOracle oracle;
-    auto key = retracing_boomerang_attack(oracle);
+    auto key = retracing_boomerang_attack_secret(oracle);
     assert(oracle.check(key));
     return 0;
 }

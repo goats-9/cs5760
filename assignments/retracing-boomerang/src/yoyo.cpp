@@ -1,59 +1,65 @@
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include "yoyo.hpp"
 
-namespace modular_aes {
+namespace boomerang {
     void simple_swap(block_t& a, block_t& b) {
         assert(a != b);
         // Generate a mask between 1 and 14 determining which columns are to be
         // swapped.
-        size_t mask = rng() % 14 + 1;
         for (size_t col = 0; col < NC; ++col) {
-            if (mask >> col & 1) {
-                for (size_t j = 0; j < NR; ++j) {
-                    std::swap(a[j][col], b[j][col]);
+            bool ok = false;
+            for (size_t j = 0; j < NR; ++j) {
+                if (a[j][col] != b[j][col]) {
+                    ok = true;
+                    break;
                 }
             }
+            if (!ok) {
+                continue;
+            }
+            for (size_t j = 0; j < NR; ++j) {
+                std::swap(a[j][col], b[j][col]);
+            }
+            return;
         }
     }
 
-    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t>& oracle, block_t& x0, block_t& x1, int _cnt1, int _cnt2) {
-        int cnt1 = 0, cnt2 = 0, wrong_pair = 0, mxcnt = 0;
+    bool yoyo_distinguisher_5rd(Oracle<block_t, block_t, aes_key_t>& oracle, size_t col, block_t& x0, block_t& x1) {
+        int cnt1 = 0, cnt2 = 0, wrong_pair = 0;
         block_t p0, p1, c0, c1;
-        while (cnt1 < _cnt1) {
+        while (cnt1 < 16384) {
             cnt1++;
             p0 = random_block(), p1 = p0;
-            for (size_t j = 0; j < 2; j++) {
-                while (p1[j][0] == p0[j][0]) {
-                    p1[j][0] = random_byte();
+            for (size_t j = 0; j < NR; j++) {
+                while (p1[j][col] == p0[j][col]) {
+                    p1[j][col] = random_byte();
                 }
             }
             x0 = p0, x1 = p1;
             cnt2 = 0, wrong_pair = 0;
-            while (cnt2 < _cnt2 && !wrong_pair) {
+            while (cnt2 < 65536 && !wrong_pair) {
                 cnt2++;
-                p0 = shift_rows_(p0, {}, false);
-                p1 = shift_rows_(p1, {}, false);
+                p0 = shift_rows(p0, true);
+                p1 = shift_rows(p1, true);
                 c0 = oracle.encrypt(p0);
                 c1 = oracle.encrypt(p1);
-                c0 = shift_rows_(c0, {}, false);
-                c1 = shift_rows_(c1, {}, false);
+                c0 = shift_rows(c0, true);
+                c1 = shift_rows(c1, true);
                 simple_swap(c0, c1);
-                c0 = shift_rows_(c0, {}, true);
-                c1 = shift_rows_(c1, {}, true);
+                c0 = shift_rows(c0);
+                c1 = shift_rows(c1);
                 p0 = oracle.decrypt(c0);
                 p1 = oracle.decrypt(c1);
-                p0 = shift_rows_(p0, {}, true);
-                p1 = shift_rows_(p1, {}, true);
+                p0 = shift_rows(p0);
+                p1 = shift_rows(p1);
                 for (size_t i = 0; i < NC; ++i) {
                     int cnt = 0;
                     for (size_t j = 0; j < NR; ++j) {
                         cnt += p0[j][i] == p1[j][i];
                     }
                     if (cnt >= 2 && cnt < 4) {
-                        if (mxcnt < cnt2) {
-                            mxcnt = cnt2;
-                        }
                         wrong_pair = 1;
                         break;
                     }
@@ -61,8 +67,8 @@ namespace modular_aes {
                 simple_swap(p0, p1);
             }
             if (!wrong_pair) {
-                x0 = shift_rows_(x0, {}, false);
-                x1 = shift_rows_(x1, {}, false);
+                x0 = shift_rows(x0, true);
+                x1 = shift_rows(x1, true);
                 return true;
             }
         }
