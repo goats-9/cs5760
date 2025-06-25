@@ -10,9 +10,6 @@
 #include "constants.hpp"
 
 namespace boomerang {
-    /* Galois field operators */
-    constexpr byte_t MIN_POLY = 0x1b;   // Minimal polynomial of GF(2^8)
-
     // Addition in GF(2^8)
     byte_t gadd(byte_t, byte_t);
     word_t gadd(word_t, word_t);

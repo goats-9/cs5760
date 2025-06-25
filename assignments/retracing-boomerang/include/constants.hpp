@@ -16,6 +16,7 @@ namespace boomerang {
     using block_t = std::array<word_t, NR>;
     using aes_key_t = std::vector<word_t>;
 
+    // Multiplication tables in GF(2^8)
     constexpr std::array<byte_t, 256> Logtable = {
       0,   0,  25,   1,  50,   2,  26, 198,  75, 199,  27, 104,  51, 238, 223,   3, 
     100,   4, 224,  14,  52, 141, 129, 239,  76, 113,   8, 200, 248, 105,  28, 193, 
@@ -74,6 +75,7 @@ namespace boomerang {
     140, 161, 137,  13, 191, 230,  66, 104,  65, 153,  45,  15, 176,  84, 187,  22, 
     }};
     
+    // AES inverse S-box
     constexpr std::array<byte_t, 256> Si = {{
      82,   9, 106, 213,  48,  54, 165,  56, 191,  64, 163, 158, 129, 243, 215, 251, 
     124, 227,  57, 130, 155,  47, 255, 135,  52, 142,  67,  68, 196, 222, 233, 203, 

@@ -177,8 +177,7 @@ namespace boomerang {
     }
 
     aes_key_t retracing_boomerang_attack_secret(Oracle<block_t, block_t, aes_key_t>& oracle) {
-        const size_t sz = 1 << 8;
-        const size_t fsz = 1 << 11;
+        const size_t sz = 1 << 8, fsz = 1 << 12;
         // Create a GF(2^8) instance to use for solving the system of equations.
         gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
         aes_key_t key(4);
@@ -242,11 +241,11 @@ namespace boomerang {
     }
 
     aes_key_t retracing_boomerang_attack_secret_yoyo(Oracle<block_t, block_t, aes_key_t>& oracle) {
-        const size_t sz = 10 + (1 << 10);
+        const size_t sz = 1024;
         // Create a GF(2^8) instance to use for solving the system of equations.
         gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
         aes_key_t key(4);
-        block_t p0, p1, f0, f1;
+        block_t p0, p1;
         // Attack each column
         for (size_t c = 0; c < NC; c++) {
             // Get a pair from the yoyo distinguisher
@@ -254,28 +253,34 @@ namespace boomerang {
             // Generate 2^10 + 10 friend pairs
             std::vector<std::pair<block_t, block_t>> friend_pairs;
             for (size_t i = 0; i < sz; ++i) {
-                f0 = p0, f1 = p1;
-                // Randomize all except the c-th inverse shifted column
-                for (size_t ii = 0; ii < NR; ++ii) {
-                    for (size_t jj = 0; jj < NC; ++jj) {
-                        if ((ii + c) % NC == jj) continue;
-                        f0[ii][jj] = random_byte();
-                        f1[ii][jj] = f0[ii][jj];
-                    }
-                }
+                // f0 = p0, f1 = p1;
+                // // Randomize all except the c-th inverse shifted column
+                // for (size_t ii = 0; ii < NR; ++ii) {
+                //     for (size_t jj = 0; jj < NC; ++jj) {
+                //         if ((ii + c) % NC == jj) continue;
+                //         f0[ii][jj] = random_byte();
+                //         f1[ii][jj] = f0[ii][jj];
+                //     }
+                // }
                 // Perform the yoyo and store the resulting plaintexts
-                f0 = oracle.encrypt(f0);
-                f1 = oracle.encrypt(f1);
-                f0 = shift_rows(f0, true);
-                f1 = shift_rows(f1, true);
-                simple_swap(f0, f1);
-                f0 = shift_rows(f0);
-                f1 = shift_rows(f1);
-                f0 = oracle.decrypt(f0);
-                f1 = oracle.decrypt(f1);
-                friend_pairs.emplace_back(f0, f1);
+                p0 = oracle.encrypt(p0);
+                p1 = oracle.encrypt(p1);
+                p0 = shift_rows(p0, true);
+                p1 = shift_rows(p1, true);
+                simple_swap(p0, p1);
+                p0 = shift_rows(p0);
+                p1 = shift_rows(p1);
+                p0 = oracle.decrypt(p0);
+                p1 = oracle.decrypt(p1);
+                friend_pairs.emplace_back(p0, p1);
+                p0 = shift_rows(p0);
+                p1 = shift_rows(p1);
+                simple_swap(p0, p1);
+                p0 = shift_rows(p0, true);
+                p1 = shift_rows(p1, true);
             }
             // Assume Z[l][c] = 0 and create a set of equations.
+            size_t sz = friend_pairs.size();
             for (size_t l = 0; l < NR; l++) {
                 mzed_t *a = mzed_init(gf, sz, 1024);
                 for (size_t r = 0; r < sz; ++r) {
