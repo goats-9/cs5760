@@ -4,7 +4,7 @@ This folder contains an implementation of the retracing boomerang attack on AES 
 
 ## Setup
 
-This code has been tested on Debian 12 (bookworm) and runs on Linux systems. The following packages are required to run this code: `cmake`, `libm4ri`, `libm4rie`, `pkg-config`. Ensure that these packages are available on your system.
+This code has been tested on Debian 12 (bookworm) and runs on Linux systems. The following packages are required to run this code: `cmake`, `libm4ri`, `libm4rie`, `libgnutls`, `pkg-config`. Ensure that these packages are available on your system.
 
 ## Building
 
