@@ -66,6 +66,7 @@ namespace boomerang {
                 }
                 simple_swap(p0, p1);
             }
+            std::cout << cnt1 << ' ' << cnt2 << ' ' << wrong_pair << std::endl;
             if (!wrong_pair) {
                 x0 = shift_rows(x0, true);
                 x1 = shift_rows(x1, true);

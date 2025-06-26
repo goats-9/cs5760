@@ -177,7 +177,7 @@ namespace boomerang {
     }
 
     aes_key_t retracing_boomerang_attack_secret(Oracle<block_t, block_t, aes_key_t>& oracle) {
-        const size_t sz = 1 << 8, fsz = 1 << 12;
+        const size_t sz = 1000, fsz = 10 + (1 << 10);
         // Create a GF(2^8) instance to use for solving the system of equations.
         gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
         aes_key_t key(4);
@@ -231,7 +231,7 @@ namespace boomerang {
                 for (size_t l = 0; l < 4; l++) {
                     // Solve the system of equations
                     auto rank = mzed_echelonize(a[l], 0);
-                    std::cerr << "i = " << i << ", c = " << c << ", l = " << l << ", rank = " << rank << std::endl;
+                    if (rank > 1020) std::cerr << "i = " << i << ", c = " << c << ", l = " << l << ", rank = " << rank << std::endl;
                     mzed_free(a[l]);
                 }
             }
