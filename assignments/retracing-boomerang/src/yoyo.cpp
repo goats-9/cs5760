@@ -6,8 +6,6 @@
 namespace boomerang {
     void simple_swap(block_t& a, block_t& b) {
         assert(a != b);
-        // Generate a mask between 1 and 14 determining which columns are to be
-        // swapped.
         for (size_t col = 0; col < NC; ++col) {
             bool ok = false;
             for (size_t j = 0; j < NR; ++j) {
@@ -66,7 +64,6 @@ namespace boomerang {
                 }
                 simple_swap(p0, p1);
             }
-            std::cout << cnt1 << ' ' << cnt2 << ' ' << wrong_pair << std::endl;
             if (!wrong_pair) {
                 x0 = shift_rows(x0, true);
                 x1 = shift_rows(x1, true);

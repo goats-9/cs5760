@@ -199,13 +199,10 @@ namespace boomerang {
                 }
                 // Generate friend pairs
                 for (size_t j = 0; j < fsz; j++) {
-                    f0 = p0, f1 = p1;
+                    f0 = random_block(), f1 = f0;
                     for (size_t ii = 0; ii < NR; ++ii) {
-                        for (size_t jj = 0; jj < NC; ++jj) {
-                            if ((ii + c) % NC == jj) continue;
-                            f0[ii][jj] = random_byte();
-                            f1[ii][jj] = f0[ii][jj];
-                        }
+                        f0[ii][(c + ii) % NC] = p0[ii][(c + ii) % NC];
+                        f1[ii][(c + ii) % NC] = p1[ii][(c + ii) % NC];
                     }
                     f0 = oracle.encrypt(f0);
                     f1 = oracle.encrypt(f1);
@@ -230,8 +227,8 @@ namespace boomerang {
                 }
                 for (size_t l = 0; l < 4; l++) {
                     // Solve the system of equations
-                    auto rank = mzed_echelonize(a[l], 0);
-                    if (rank > 1020) std::cerr << "i = " << i << ", c = " << c << ", l = " << l << ", rank = " << rank << std::endl;
+                    auto rank = mzed_echelonize(a[l], 1);
+                    // std::cerr << "i = " << i << ", c = " << c << ", l = " << l << ", rank = " << rank << std::endl;
                     mzed_free(a[l]);
                 }
             }
@@ -241,7 +238,7 @@ namespace boomerang {
     }
 
     aes_key_t retracing_boomerang_attack_secret_yoyo(Oracle<block_t, block_t, aes_key_t>& oracle) {
-        const size_t sz = 1024;
+        const size_t sz = 1 << 14;
         // Create a GF(2^8) instance to use for solving the system of equations.
         gf2e *gf = gf2e_init(irreducible_polynomials[8][1]);
         aes_key_t key(4);
@@ -295,7 +292,7 @@ namespace boomerang {
                     }
                 }
                 // Solve the system of equations
-                auto rank = mzed_echelonize(a, 0);
+                auto rank = mzed_echelonize(a, 1);
                 std::cerr << "c = " << c << ", l = " << l << ", rank = " << rank << std::endl;
                 mzed_free(a);
             }
