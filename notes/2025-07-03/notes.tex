@@ -1,0 +1,102 @@
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+
+\documentclass[twoside]{article}
+%\usepackage{soul}
+\usepackage{./lecnotes_macros}
+
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURERS**}{**SCRIBE**}
+\lecture{10}{Signatures and Gr\"{o}bner Bases}{Maria Francis}{Gautam Singh}{3 July 2025}
+%\footnotetext{These notes are partially based on those of Nigel Mansell.}
+
+%All figures are to be placed in a separate folder named ``images''
+
+% **** YOUR NOTES GO HERE:
+
+\section{F5 Algorithm}
+\label{sec:f5-algorithm}
+
+The F5 algorithm proposed by Faugere in 2002 ensures no zero reduction will
+happen for \emph{regular sequences} of polynomials \(\langle f_1, \ldots, f_s
+\rangle\) in a polynomial ring \(k\sbrak{x_1, \ldots, x_n}\). Eder proposed an
+algorithm to lift this seuqence of polynomials to a module \(k\sbrak{x_1,
+\ldots, x_n}^s\).
+
+\section{Notations}
+\label{sec:notations}
+
+Suppose \(R\) is a polynomial ring over a field \(k\) in \(n\) variables. Define
+\(R^m\) to be a free \(R\)-module with standard basis \(e_1, \ldots, e_m\). Any
+polynomial of \(R^m\) can be written as \(f = \sum_{i=1}^m f_i e_i\) where \(f_i
+\in R\). Modules can be thought to be the ring counterparts of vector spaces,
+that is, the coefficients are polynomials instead of field elements. As a
+corollary, a module may or may not have a basis. A \emph{free module} has a
+basis.
+
+All the module elements \(\alpha \in R^m\) can be uniquely written as a finite
+sum \(\alpha = \sum_{ae_i \in \cN} ae_i\) where \(a \in R\) and \(\cN\) is a
+minimal set. The \(ae_i\)'s are called \emph{module terms}.
+
+In a module, two orderings are required: one for \(R\) and the other for
+\(R^m\). The orderings should be compatible, that is, if \(a \leq b\) in \(R\)
+then \(ae_i \leq be_i\) in \(R^m\).
+
+If \(\alpha = \sum_{i=1}^m a_i e_i\) is a module element with \(a_i \in R\),
+then we can define the homomorphism \(\alpha \mapsto \bar{\alpha}\) where
+\(\bar{\alpha} = \sum_{i=1}^m a_i f_i\). An element \(\alpha\) is called a
+\emph{syzygy} if \(\bar{\alpha} = 0\). The module of all syzygies of \(f_1,
+\ldots f_s\) is denoted by \(\mathrm{Sy}(f_1, \ldots, f_s)\).
+
+\section{Signatures}
+\label{sec:signatures}
+
+The signature of \(\alpha \in R^m\) is defined as the leading term of \(\alpha\)
+with respect to the ordering on \(R^m\). For \(\alpha \in R^m\), we define the
+\emph{sig-poly} pair of \(\alpha\)  as \(\brak{S\brak{\alpha}, \bar{\alpha}} \in
+R^m \times R\). Over fields, \(\alpha, \beta \in R^m\) are equal up to sig-poly
+pairs if \(S\brak{\alpha} = S\brak{k\beta}\) and \(\bar{\alpha} = \bar{k\beta}\)
+for some field element \(k \neq 0\).
+
+A typical module monomial ordering is as follows. Assume a monomial order \(<\)
+on \(R\) and let \(ae_i, be_j\) be two module monomials in \(R^m\). The
+\emph{POT ordering} gives priority to position over the term. Here, \(ae_i <
+be_j\) iff \(i < j\) or \(i = j\) and \(a < b\). The \emph{TOP ordering} gives
+priority to the term over the position. Here, \(ae_i < be_j\) iff \(a < b\) or
+\(a = b\) and \(i < j\).
+
+\section{Signature Reduction}
+\label{sec:signature-reduction}
+
+\begin{definition}
+    Let \(\alpha \in R^m\) and \(t\) be a term in \(\bar{\alpha}\). Then, we can
+    \emph{s-reduce} \(t\) by \(\beta \in R^m\) if
+    \begin{enumerate}
+        \item There exists a monomial \(b\) such that
+        \(\mathrm{lt}\brak{\bar{b\beta}} = t\).
+        \item \(S\brak{b\beta} < S\brak{\alpha}\).
+    \end{enumerate}
+\end{definition}
+We insist that \(S\brak{b\beta} < S\brak{\alpha}\) since an equality can result
+in cancelling the signatures or leading terms. This is called a \emph{signature
+drop}.
+
+\begin{lemma}
+    Let \(\alpha, \beta \in R^m\) and \(\cG\) be a signature Gr\"{o}bner basis
+    upto a signature \(S\brak{\alpha} = S\brak{\beta}\). If \(\alpha\) and
+    \(\beta\) are s-reduced, then either \(\mathrm{lt}\brak{\bar{\alpha}} =
+    \mathrm{lt}\brak{\bar{\beta}}\) or \(\bar{\alpha} = \bar{\beta} = 0\).
+\end{lemma}
+
+\begin{lemma}[Singular Criterion]
+    For any signature \(T\) we need to handle exactly one \(a\alpha \in R^m\)
+    from \(\cG\) such that \(S\brak{a\alpha} = T\).
+\end{lemma}
+
+\end{document}

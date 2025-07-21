@@ -1,0 +1,112 @@
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+
+\documentclass[twoside]{article}
+%\usepackage{soul}
+\usepackage{./lecnotes_macros}
+
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURERS**}{**SCRIBE**}
+\lecture{11}{Gr\"{o}bner Bases over Rings}{Maria Francis}{Gautam Singh}{7 July 2025}
+%\footnotetext{These notes are partially based on those of Nigel Mansell.}
+
+%All figures are to be placed in a separate folder named ``images''
+
+% **** YOUR NOTES GO HERE:
+
+\section{Gr\"{o}bner Bases over Principal Ideal Domains (PIDs)}
+\label{sec:groebner-bases-over-pids}
+
+Here, we consider the univariate polynomial ring \(\bZ\brak{x}\). The ordering
+in \(\bZ\) is \(a_1 < a_2\) if \(\abs{a_1} < \abs{a_2}\) or if \(\abs{a_1} =
+\abs{a_2}\) and \(a_1\) is negative.
+
+\begin{definition}[Reduction]
+    We say that \(f \xrightarrow{g} h\) if \(\mathrm{lm}\brak{g} \mid
+    \mathrm{lm}\brak{f}\) and \(\exists a, b \in \bZ\) such that
+    \(\mathrm{lc}\brak{f} = a\mathrm{lc}\brak{g} + b\) where \(a \neq 0\) and
+    \(b < \mathrm{lc}\brak{f}\).
+\end{definition}
+
+\section{Strong and Weak Gr\"{o}bner Basis}
+
+\begin{definition}[Strong Gr\"{o}bner Basis]
+    A set of polynomials \(G = \brak{g_1, \ldots, g_t}\) is a \emph{strong
+    Gr\"{o}bner basis} for an ideal \(I\) if for any \(f \in I \setminus
+    \cbrak{0}\), \(\exists a, g \in G\) such that \(\mathrm{lt}\brak{g} \mid
+    \mathrm{lt}\brak{f}\).
+\end{definition}
+
+To construct a strong Gr\"{o}bner basis, we required to construct a G-polynomial
+in addition to an S-polynomial.
+
+\begin{definition}[S/G-Polynomial]
+    Let \(f, g \in R\sbrak{x}\). WLOG let \(\mathrm{lc}\brak{f} <
+    \mathrm{lc}\brak{g}\). Let \(t = \mathrm{lcm}\brak{\mathrm{lm}\brak{f},
+    \mathrm{lm}\brak{g}}\). Define
+    \begin{equation}
+        t_f = \frac{t}{\mathrm{lm}\brak{f}}, \quad
+        t_g = \frac{t}{\mathrm{lm}\brak{g}}.
+    \end{equation}
+    Similarly, let \(a = \mathrm{lcm}\brak{\mathrm{lc}\brak{f},
+    \mathrm{lc}\brak{g}}\). Define
+    \begin{equation}
+        a_f = \frac{a}{\mathrm{lc}\brak{f}}, \quad
+        a_g = \frac{a}{\mathrm{lc}\brak{g}}.
+    \end{equation}
+    Then, the S polynomial of \(f\) and \(g\) is defined as
+    \begin{equation}
+        S\brak{f, g} = a_ft_ff - a_gt_gg.
+    \end{equation}
+    Let \(b = \gcd\brak{\mathrm{lc}\brak{f}, \mathrm{lc}\brak{g}}\). Then, by
+    the Extended Euclidean algorithm, we have \(b = b_f\mathrm{lc}\brak{f} +
+    b_g\mathrm{lc}\brak{g}\) for some \(b_f, b_g\). Then, the G-polynomial of
+    \(f\) and \(g\) is given by
+    \begin{equation}
+        G\brak{f, g} = b_ft_ff - b_gt_gg.
+    \end{equation}
+\end{definition}
+
+\begin{definition}[S/G-Pairs]
+    Let \(\cbrak{f_1, \ldots, f_m}\) be the set \(R^m\). Let \(\alpha, \beta \in
+    R^m\). We assume that \(\mathrm{lc}\brak{\bar{\alpha}} <
+    \mathrm{lc}\brak{\bar{\beta}}\). Let \(t =
+    \mathrm{lcm}\brak{\mathrm{lm}\brak{\bar{\alpha}},
+    \mathrm{lm}\brak{\bar{\beta}}}\). Define
+    \begin{equation}
+        t_\alpha = \frac{t}{\mathrm{lm}\brak{\bar{\alpha}}}, \quad
+        t_\beta = \frac{t}{\mathrm{lm}\brak{\bar{\beta}}}.
+    \end{equation}
+    Let \(a = \mathrm{lcm}\brak{\mathrm{lc}\brak{\bar{\alpha}},
+    \mathrm{lc}\brak{\bar{\beta}}}\). Define
+    \begin{equation}
+        a_\alpha = \frac{a}{\mathrm{lc}\brak{\bar{\alpha}}}, \quad
+        a_\beta = \frac{a}{\mathrm{lc}\brak{\bar{\beta}}}.
+    \end{equation}
+    Then, the S-pair of \(\alpha\) and \(\beta\) is defined as
+    \begin{equation}
+        \mathrm{Spair}\brak{\alpha, \beta} = a_\alpha t_\alpha \alpha - a_\beta t_\beta \beta.
+    \end{equation}
+    Let \(b = \gcd\brak{\mathrm{lc}\brak{\bar{\alpha}},
+    \mathrm{lc}\brak{\bar{\beta}}}\). Then, the G-pair of \(\alpha\) and
+    \(\beta\) is defined as
+    \begin{equation}
+        \mathrm{Gpair}\brak{\alpha, \beta} = b t_\alpha \alpha - b t_\beta \beta.
+    \end{equation}
+\end{definition}
+
+\begin{definition}[S-Reduction]
+    Let \(\alpha, \beta \in R^m\). We say that \(\beta\) s-reduces to \(\alpha\)
+    if \(\bar{\beta}\) reduces \(\bar{\alpha}\) and \(\mathrm{Sig}\brak{\alpha}
+    > \mathrm{Sig}\brak{\beta}\) where \(\mathrm{lc}\brak{\bar{\alpha}} =
+    a\mathrm{lc}\brak{\bar{\beta}} + b\) for some \(a, b \in R\) where \(a \neq
+    0\) and \(b < \mathrm{lc}\brak{\bar{\alpha}}\).
+\end{definition}
+
+\end{document}

@@ -1,0 +1,157 @@
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+
+\documentclass[twoside]{article}
+%\usepackage{soul}
+\usepackage{./lecnotes_macros}
+
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURERS**}{**SCRIBE**}
+\lecture{9}{Introduction to Gr\"{o}bner Bases}{Maria Francis}{Gautam Singh}{26 June 2025}
+%\footnotetext{These notes are partially based on those of Nigel Mansell.}
+
+%All figures are to be placed in a separate folder named ``images''
+
+% **** YOUR NOTES GO HERE:
+
+In multivariate polynomial rings, long division can yield different results
+depending on the monomial order chosen. Gr\"{o}bner bases provide a systematic
+way to handle these variations by defining a canonical form for polynomials. In
+particular, the ordering of divisors does not matter in \(k\sbrak{x_1, \ldots,
+x_n}\).
+
+\section{Monomial Orders}
+\label{sec:monomial-orders}
+
+We begin by defining a \emph{monomial order} on the polynomial ring
+\(k\sbrak{x_1, \ldots, x_n}\).
+
+\begin{definition}[Monomial Order]
+    A monomial order is an order on the set of monomials in \(k\sbrak{x_1,
+    \ldots, x_n}\) satisfying the following properties:
+    \begin{enumerate}
+        \item It is a \emph{total ordering}.
+        \item If \(\alpha > \beta\) are monomials, then \(\alpha\gamma >
+        \beta\gamma\) for any monomial \(\gamma\).
+        \item It is \emph{well ordering}, meaning every non-empty set of
+        monomials has a least element.
+    \end{enumerate}
+\end{definition}
+
+An example of a monomial order is \emph{lexicographic order} (lex), where we set
+an ordering on the variables such as \(x_1 > x_2 > \ldots > x_n\) and compare
+monomials by considering the leftmost nonzero element in their pointwise
+difference. Accounting for the total degree of the monomials gives the
+\emph{graded lexicographic order} (grlex) and \emph{graded reverse lexicographic
+order} (grrevlex).
+
+\section{Monomial Ideals}
+\label{sec:monomial-ideals}
+
+\begin{definition}[Monomial Ideal]
+    An ideal \(I \subseteq k\sbrak{x_1, \ldots, x_n}\) is called a
+    \emph{monomial ideal} if there is a finite subset \(A \subset \bN^n\) such
+    that \(I\) consists of all polynomials that can be written as finite sums of
+    monomials \(c x^\alpha\) where \(c \in k\) and \(\alpha \in A\).
+\end{definition}
+
+In other words, monomial ideals are those which have a generator solely
+consisting of monomials.
+
+\begin{lemma}[Dickson's Lemma]
+    All monomial ideals in \(k\sbrak{x_1, \ldots, x_n}\) are finitely generated.
+\end{lemma}
+
+\begin{theorem}[Hilbert Basis Theorem]
+    Any ideal in \(R\sbrak{x_1, \ldots, x_n}\) is finitely generated if and only
+    if it is 
+\end{theorem}
+
+\begin{definition}
+    Let \(I \in k\sbrak{x_1, \ldots, x_n}\) be an ideal other than
+    \(\cbrak{0}\). We define the following sets.
+    \begin{enumerate}
+        \item \(\mathrm{LT}\brak{I}\) is the set of leading terms of the
+        polynomials in \(I\).
+    \end{enumerate}
+\end{definition}
+
+Suppose that \(I = \langle f_1, \ldots, f_s \rangle\) is an ideal. Then
+\(\langle \mathrm{LT}\brak{f_1}, \ldots, \mathrm{LT}\brak{f_s} \rangle \subseteq
+\mathrm{LT}\brak{I}\), with equality iff \(\langle f_1, \ldots, f_s \rangle\) is
+a Gr\"{o}bner basis of \(I\).
+
+\begin{proposition}[Existence of Gr\"{o}bner Bases]
+    Let \(I \subseteq k\sbrak{x_1, \ldots, x_n}\) be an ideal. Then,
+    \begin{enumerate}
+        \item \(\langle \mathrm{LT}\brak{I} \rangle\) is a monomial ideal.
+        \item \(\exists\ g_1, \ldots, g_t \in I\) such that
+        \(\langle \mathrm{LT}\brak{g_1}, \ldots, \mathrm{LT}\brak{g_t} \rangle =
+        \langle \mathrm{LT}\brak{I} \rangle\).
+    \end{enumerate}
+\end{proposition}
+
+\begin{definition}[Gr\"{o}bner Basis]
+    Fix a monomial order. A finite subset \(G = \cbrak{g_1, \ldots, g_t}\) of an
+    ideal \(I\) is said for be a Gr\"{o}bner basis of \(I\) iff \(\langle
+    \mathrm{LT}\brak{g_1}, \ldots, \mathrm{LT}\brak{g_t} \rangle = \langle
+    \mathrm{LT}\brak{I} \rangle\).
+\end{definition}
+In particular, we also have \(\langle g_1, \ldots, g_t \rangle = I\).
+
+\section{Properties of Gr\"{o}bner Bases}
+\label{sec:properties-of-groebner-bases}
+
+\begin{enumerate}
+    \item Remainder on division of \(f\) by \(G\) is unique.
+\end{enumerate}
+
+\begin{definition}[S-Polynomial]
+    Let \(f, g \in k\sbrak{x_1, \ldots, x_n}\) be two polynomials with
+    \(\mathrm{lm}\brak{f} = x^\alpha\) and \(\mathrm{lm}\brak{g} = x^\beta\) and
+    \(\gamma\) be the least common multiple (LCM) of \(\mathrm{lm}\brak{f}\) and
+    \(\mathrm{lm}\brak{g}\), i.e., \(\gamma_i = \max\brak{\alpha_i, \beta_i}\).
+    The S-polynomial of \(f\) and \(g\) is defined as
+    \begin{equation}
+        S\brak{f, g} \triangleq x^\gamma \brak*{\frac{f}{\mathrm{lt}\brak{f}} - \frac{g}{\mathrm{lt}\brak{g}}}
+        \label{eq:s-polynomial}
+    \end{equation}
+\end{definition}
+The S-polynomial is a way to combine two polynomials such that their leading
+terms are eliminated.
+
+\begin{theorem}[Buchberger's Criterion]
+    Let \(I\) be a polynomial ideal. Then a basis \(G = \cbrak{g_1, \ldots,
+    g_t}\) of \(I\) is a Gr\"{o}bner basis of \(I\) iff for all \(f, g \in I, f
+    \neq g\), the S-polynomial \(S\brak{f, g}\) reduces to zero modulo \(G\).
+\end{theorem}
+This gives us \emph{Buchberger's algorithm} for computing Gr\"{o}bner bases.
+
+\section{Buchberger's Algorithm}
+
+\textbf{Input:} Finite set of polynomials \(F = \cbrak{f_1, \ldots, f_s}\).
+
+\textbf{Output:} Gr\"{o}bner basis \(G\) of the ideal generated by \(F\).
+
+\begin{enumerate}
+    \item Set \(G \gets F\).
+    \item For each pair of polynomials \(f_i, f_j \in G\):
+    \begin{enumerate}
+        \item Compute the S-polynomial \(S\brak{f_i, f_j}\) using
+        \eqref{eq:s-polynomial}.
+        \item Reduce \(S\brak{f_i, f_j}\) modulo \(G\).
+        \item If the result is non-zero, add it to \(G\).
+    \end{enumerate}
+    \item Repeat step 2 until no new polynomials are added to \(G\).
+\end{enumerate}
+
+To speed up this algorithm, especially the reduction step, we can use signatures
+of polynomials \(p\) to predict which polynomials in \(G\) will contribute to
+the reduction of \(p\).
+\end{document}
