@@ -56,12 +56,13 @@
 \setbeamertemplate{theorems}[numbered]
 
 \usepackage{./presentation_macros}
+\addbibresource{references.bib}
 
 \title{The Retracing Boomerang Attack}
-\subtitle{Orr Dunkelman, Nathan Keller, Eyal Ronen, and Adi Shamir\\EUROCRYPT 2020}
+\subtitle{Orr Dunkelman, Nathan Keller, Eyal Ronen, Adi Shamir\\EUROCRYPT 2020}
 \author{Gautam Singh}
 \institute[IITH]{Indian Institute of Technology Hyderabad}
-\date{July 21, 2025}
+\date{July 30, 2025}
 
 \begin{document}
     
@@ -91,61 +92,10 @@
     \section{Preliminaries}
     \label{sec:prelims}
 
-    \subsection{Boomerang Attacks}
-    \label{subsec:boomerang}
-
-    \begin{frame}{The Boomerang Attack}
-        \begin{columns}
-            \begin{column}{0.7\textwidth}
-                \begin{enumerate}
-                    \item<1-> Typically split the encryption function as \(E =
-                    E_1 \circ E_0\), with differential trails for each
-                    sub-cipher.
-                    \item<2-> We can build a distinguisher that can distinguish
-                    \(E\) from a truly random permutation in
-                    \(\cO\brak{\brak{pq}^{-2}}\) plaintext pairs.
-                \end{enumerate}
-            \end{column}
-            \begin{column}{0.3\textwidth}
-                \begin{figure}[!ht]
-                    \centering
-                    \includegraphics[width=\columnwidth]{images/boomerang.png}
-                    \caption{The boomerang attack.}
-                    \label{fig:boomerang}
-                \end{figure}
-            \end{column}
-        \end{columns}
-    \end{frame}
-
-    \begin{frame}{The Boomerang Distinguisher}
-        \begin{algorithm}[H]
-            \caption{The Boomerang Attack Distinguisher}
-            \label{alg:boomerang-dist}
-            \algrenewcommand\alglinenumber[1]{\small ####1:}
-            \small
-            \begin{algorithmic}[1]
-                \State Generate \(\brak{pq}^{-2}\) plaintext pairs \(\brak{P_1, P_2}\)
-                such that \(P_1 \oplus P_2 = \alpha\).
-                \ForAll {pairs \(\brak{P_1, P_2}\)}
-                    \State Ask for the encryption of \(\brak{P_1, P_2}\) to \(\brak{C_1,
-                    C_2}\).
-                    \State Compute \(C_3 = C_1 \oplus \delta\) and \(C_4 = C_2 \oplus 
-                    \delta\). \Comment{\(\delta\)-shift}
-                    \State Ask for the decryption of \(\brak{C_3, C_4}\) to \(\brak{P_3,
-                    P_4}\).
-                    \If {\(P_3 \oplus P_4 = \alpha\)}
-                        \State \Return This is the cipher \(E\)
-                    \EndIf
-                \EndFor
-                \State \Return This is a random permutation
-            \end{algorithmic}
-        \end{algorithm}
-    \end{frame}
-
     \subsection{The Yoyo Game}
     \label{subsec:yoyo-game}
     
-    \begin{frame}[<+->]{The Yoyo Game}
+    \begin{frame}[<+->]{The Yoyo Game\footcite{ronjomYoyoTricksAES2017}}
         \begin{enumerate}
             \item Similar to boomerang, starts by encrypting \(\brak{P_1, P_2}\)
             to \(\brak{C_1, C_2}\), then modifying them to \(\brak{C_3, C_4}\)
@@ -184,8 +134,8 @@
         \end{enumerate}
     \end{frame}
 
-    \begin{frame}{The SimpleSWAP Algorithm}
-        \cref{alg:simple-swap} is a simple method to generate mixture
+    \begin{frame}{The SimpleSWAP Algorithm\footcite{ronjomYoyoTricksAES2017}}
+        \cref{alg:simple-swap} is a primitive used to generate mixture
         counterparts.
         \begin{algorithm}[H]
             \caption{Swaps the first word where texts are different and returns one word.}
@@ -213,7 +163,7 @@
     \begin{frame}{The Retracing Boomerang Framework}
         \begin{figure}[!ht]
             \centering
-            \includegraphics[width=0.6\columnwidth]{images/retracing_boomerang.png}
+            \includegraphics[width=0.65\columnwidth]{images/retracing_boomerang.png}
             \caption{The retracing boomerang attack.}
             \label{fig:retr-boomerang}
         \end{figure}
@@ -221,9 +171,7 @@
 
     \begin{frame}[<+->]{The Retracing Boomerang Attack}
         \begin{enumerate}
-            \item The \emph{retracing boomerang} framework consists of a
-            \emph{shifting} type and a \emph{mixing} type.
-            \item Both attacks use the setup shown in \cref{fig:retr-boomerang}.
+            \item Consists of a \emph{shifting} type and a \emph{mixing} type.
             \item Although the additional split looks restrictive, it applies
             for a wide class of block ciphers such as SASAS constructions.
             \item It is assumed that \(E_{12}\) can be split into two parts of
@@ -242,16 +190,14 @@
             \emph{Discard all pairs not satisfying this relation}. This is a
             \(\brak{b - 1}\)-bit filtering.
             \item \(\delta\)-shift is performed on the filtered ciphertext pairs
-            to get \(\brak{C_3, C_4}\). This ensures \(\cbrak{C_1, C_3} =
-            \cbrak{C_2, C_4}\).
+            to get \(\brak{C_3, C_4}\). This ensures \(\cbrak{C_1^L, C_3^L} =
+            \cbrak{C_2^L, C_4^L}\).
             \item \emph{If one of these pairs satisfies \(\delta_L
             \xrightarrow{q_2^L} \mu_L\), the other pair will too!}. Increases
             the probability of the boomerang distinguisher by
             \(\brak{q_2^L}^{-1}\).
-            \item Any possible characteristic of \(E_{12}^L\) has probability at
-            least \(2^{-b + 1}\), thus overall probability increases by a factor
-            of at most \(2^{b - 1}\). On the other hand, filtering only leaves
-            \(2^{-b + 1}\) of the pairs, so \emph{no apparent gain?}
+            \item Higher signal to noise ratio (SNR) and lower data complexity
+            due to filtering.
         \end{enumerate}
     \end{frame}
 
@@ -270,16 +216,16 @@
         \begin{enumerate}
             \item In shifting attack, \(\cbrak{C_1^L, C_2^L} = \cbrak{C_3^L,
             C_4^L}\) forced using a \(\delta\)-shift.
-            \item Each ciphertext shifted by \(\brak{C_1^L \oplus C_2^L, 0}\),
-            thus
+            \item Here, each ciphertext shifted by \(\brak{C_1^L \oplus C_2^L,
+            0}\), thus
             \begin{align}
                 C_3 &= \brak{C_3^L, C_3^R} = \brak{C_1^L \oplus \brak{C_1^L \oplus C_2^L}, C_1^R} = \brak{C_2^L, C_1^R}, \\
                 C_4 &= \brak{C_4^L, C_4^R} = \brak{C_2^L \oplus \brak{C_1^L \oplus C_2^L}, C_2^R} = \brak{C_1^L, C_2^R}.
             \end{align}
-            Here, \(\cbrak{C_1^L, C_2^L} = \cbrak{C_3^L, C_4^L}\).
-            \item Further, \(C_1^R = C_3^R\) and \(C_2^R = C_4^R\).
-            \emph{Additional} gain of \(\brak{q_2^R}^{-2}\) for total
-            probability \(\brak{pq_1}^2q_2^L\), \emph{better than shifting!}
+            \item Hence, \(\cbrak{C_1^L, C_2^L} = \cbrak{C_3^L, C_4^L}\),
+            \(C_1^R = C_3^R\) and \(C_2^R = C_4^R\).
+            \item \emph{Additional} gain of \(\brak{q_2^R}^{-2}\) for total
+            probability of \(\brak{pq_1}^2q_2^L\), \emph{better than shifting!}
             \item Similar to the core step used in the yoyo attack on AES.
         \end{enumerate}
     \end{frame}
@@ -292,53 +238,16 @@
         \end{figure}
     \end{frame}
 
-    \subsection{Comparison Between the Two Types of Retracing Attacks}
-    \label{subsec:cmp}
-    \begin{frame}[<+->]{Advantages of Shifting Retracing Attack}
-        \begin{enumerate}
-            \item \textbf{Using structures}
-            \begin{itemize}[<+->]
-                \item Shifting applies the same \(\delta\)-shift to all pairs of
-                ciphertexts.
-                \item Filtering applied first reduces the data complexity. No
-                filtering in mixing since shift is based on ciphertexts.
-                \item With shifting, one can obtain all ciphertexts, shift them
-                by \(\delta\) and then decrypt, simultaneously checking for the
-                filter and condition between \(P_3\) and \(P_4\) using a hash
-                table.
-            \end{itemize}
-            \item \textbf{Combination with \(E_{11}\)}
-            \begin{itemize}[<+->]
-                \item In mixing, the output difference of \(E_{12}^L\) is
-                arbitrary.
-                \item Usually no good combination between characteristics of
-                \(\brak{E_{12}^L}^{-1}\) and \(\brak{E_{11}}^{-1}\). For
-                instance, in the yoyo attack, \(E_{11}\) is empty.
-            \end{itemize}
-            \item \textbf{Construction of `friend pairs'}
-            \begin{itemize}[<+->]
-                \item `Friend pairs' are pairs which satisfy a common property.
-                \item More `friend pairs' can be constructed in the shifting
-                variant.
-            \end{itemize}
-        \end{enumerate}
-    \end{frame}
-
     \section[Application to AES]{Retracing Boomerang Attack on Five Round AES}
     \label{sec:retr-boomerang-aes}
 
     \subsection{Brief Description of AES}
     \label{subsec:aes-description}
 
-    \begin{frame}{Description of AES}
+    \begin{frame}{Description of AES\footcite{nationalinstituteofstandardsandtechnologyAdvancedEncryptionStandard2023}}
         \begin{enumerate}[<+->]
             \item Byte ordering shown after \(SB\) in \cref{fig:aes} (column
             major).
-            \item \(j\)-th byte of a state \(X_i\) is denoted as \(X_{i,j}\) or
-            \(\brak{X_i}_j\).
-            \item Denote by \(W, Z\) and \(X\) the states before \(MC\) in round
-            0, at the input to round 1 and before \(MC\) in round 2
-            respectively.
             \item The \(l\)-th shifted column (resp. \(l\)-th inverse shifted
             column) refers to application of \(SR\) (resp. \(SR^{-1}\)) to the
             \(l\)-th column.
@@ -364,8 +273,6 @@
             difference in three inverse shifted columns and zero output
             difference in a single shifted column with probability \(4 \cdot
             2^{-8} = 2^{-6}\).
-            \item For \(E_{12}\), 1.5 rounds of AES can be taken as four 32-bit
-            super S-boxes.
             \item Attack inverse shifted columns of \(k_{-1}\). Friend pairs
             used to get more information.
         \end{enumerate}
@@ -374,21 +281,22 @@
     \begin{frame}[<+->]{Meet in the Middle Improvement on Yoyo Attack}
         \begin{enumerate}
             \item Denote the value of byte \(m\) before \(MC\) operation of
-            round 0 by \(W_m\), and WLOG let \(l = 0\). Then,
+            round 0 by \(W_m\) and the corresponding output by \(Z_m\). Then,
             \begin{equation}
                 Z_0 = 02_x \cdot W_0 \oplus 03_x \cdot W_1 \oplus 01_x \cdot W_2 \oplus 01_x \cdot W_3.
                 \label{eq:mitm}
             \end{equation}
             \item Adversary guesses \(k_{-1, \cbrak{0, 5}}\) by computing the
             following for \(j = 1, 2, 3\) and storing the concatenated 24-bit
-            value in a hash table.
+            value in a hash table (each \(j\) represents a friend pair).
             \begin{equation}
                 02_x \cdot \brak{\brak{W_3^j}_0 \oplus \brak{W_4^j}_0} \oplus 03_x \cdot \brak{\brak{W_3^j}_1 \oplus \brak{W_4^j}_1}
                 \label{eq:mitm-0-5}
             \end{equation}
-            \item We need \(Z_0 = 0\) to satisfy the truncated differential
-            characteristic. Meet in the Middle (MITM) methods are used to narrow
-            down candidates for \(k_{-1}\).
+            Similarly, the other half of the right hand side of \eqref{eq:mitm}
+            is computed and a collision is checked.
+            \item \(Z_0 = 0\) needed for the characteristic. To narrow down
+            candidates for \(k_{-1}\), the following is done.
             \begin{itemize}
                 \item Specific choice of plaintexts based on DDT of AES S-boxes.
                 \item Eliminating key bytes using friend pairs.
@@ -426,7 +334,7 @@
             \item To reduce the number of candidates for \(k_{-1, \cbrak{10,
             15}}\), the boomerang process is used to return multiple friend
             pairs \(\brak{P_3^j, P_4^j}\).
-            \item In particular, we choose one such pair for which
+            \item Choose one such pair for which
             \begin{equation}
                 \brak{P_3^j}_{10} \oplus \brak{P_4^j}_{10} = 0 \quad \textrm{or} \quad \brak{P_3^j}_{15} \oplus \brak{P_4^j}_{15} = 0.
                 \label{eq:mitm-check}
